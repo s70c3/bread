@@ -1,130 +1,100 @@
-from typing import List, Dict, Optional
-from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi import FastAPI, HTTPException, Path, Query
 from pydantic import BaseModel
 from datetime import datetime
-from collections import defaultdict
+import sqlite3
 
-app = FastAPI(
-    title="Bread and Camera API",
-    description="API for managing bread types, counting breads, and managing cameras.",
-    version="1.0",
-    openapi_tags=[
-        {"name": "Breads", "description": "Endpoints for managing bread types."},
-        {"name": "Bread Counts", "description": "Endpoints for counting breads."},
-        {"name": "Cameras", "description": "Endpoints for managing cameras."},
-    ],
-)
+app = FastAPI()
 
-class BreadType(BaseModel):
-    name: str
-    enabled: bool = True
-    image: str
-
-class BreadCounting(BaseModel):
-    start_time: datetime
-    end_time: datetime
-    bread_type: str
-    counting_value: int
-
+# Модель для камер видеонаблюдения
 class Camera(BaseModel):
-    link: str
-    conveyor_number: int
-    description: Optional[str]
-    area: List[int]
-    line: List[int]
+    name: str
+    description: str
+    rtsp_stream: str
+    selection_area: str
+    counting_line: str
 
-# Stub data for breads
-breads: Dict[str, BreadType] = {
-    "white_bread": BreadType(name="white_bread", image="white_bread.jpg"),
-    "whole_grain_bread": BreadType(name="whole_grain_bread", image="whole_grain_bread.jpg")
-}
+# Модель для хлебобулочных изделий
+class BreadProduct(BaseModel):
+    name: str
+    photos: str
+    video: str
 
-# Stub data for cameras
-cameras: Dict[int, Camera] = {
-    1: Camera(link="http://example.com/camera1", conveyor_number=1, description="Camera 1 description", area=[0, 0, 100, 100], line=[0, 0, 100, 100]),
-    2: Camera(link="http://example.com/camera2", conveyor_number=2, description="Camera 2 description", area=[0, 0, 100, 100], line=[0, 0, 100, 100])
-}
+# Функция подключения к базе данных
+def connect_db():
+    return sqlite3.connect("counting_system.db")
 
-statistics = []
+# Подключение к rtsp-потоку
+@app.post("/cameras/")
+def create_camera(camera: Camera):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO cameras (name, description, rtsp_stream, selection_area, counting_line) VALUES (?, ?, ?, ?, ?)",
+              (camera.name, camera.description, camera.rtsp_stream, camera.selection_area, camera.counting_line))
+    conn.commit()
+    conn.close()
+    return {"message": "Camera created successfully"}
 
-@app.post("/bread/", response_model=BreadType, tags=["Breads"])
-async def create_bread(name: str, image: UploadFile = File(...)):
-    bread = BreadType(name=name, image=image.filename)
-    # Save bread image to the server's filesystem
-    with open(image.filename, "wb") as buffer:
-        buffer.write(image.file.read())
-    return bread
+# Просмотр списка всех камер
+@app.get("/cameras/")
+def get_cameras():
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM cameras")
+    cameras = c.fetchall()
+    conn.close()
+    return {"cameras": cameras}
 
-@app.get("/bread/", response_model=List[BreadType], tags=["Breads"])
-async def get_breads():
-    return [bread for bread in breads.values() if bread.enabled]
+# Изменение информации о камере
+@app.put("/cameras/{camera_id}")
+def update_camera(camera_id: int, camera: Camera):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("UPDATE cameras SET name=?, description=?, rtsp_stream=?, selection_area=?, counting_line=? WHERE camera_id=?",
+              (camera.name, camera.description, camera.rtsp_stream, camera.selection_area, camera.counting_line, camera_id))
+    conn.commit()
+    conn.close()
+    return {"message": "Camera updated successfully"}
 
-@app.get("/breads/{bread_name}/", response_model=BreadType, tags=["Breads"])
-async def get_bread(bread_name: str):
-    if bread_name not in breads:
-        raise HTTPException(status_code=404, detail="Bread not found")
-    return breads[bread_name]
+# Удаление камеры
+@app.delete("/cameras/{camera_id}")
+def delete_camera(camera_id: int):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM cameras WHERE camera_id=?", (camera_id,))
+    conn.commit()
+    conn.close()
+    return {"message": "Camera deleted successfully"}
 
-@app.put("/breads/{bread_name}/", response_model=BreadType, tags=["Breads"])
-async def update_bread(bread_name: str, enabled: Optional[bool] = None):
-    if bread_name not in breads:
-        raise HTTPException(status_code=404, detail="Bread not found")
-    if enabled is not None:
-        breads[bread_name].enabled = enabled
-    return breads[bread_name]
+# Подсчет изделий
+@app.get("/bread/count/{product_id}")
+def count_product(product_id: int):
+    # Здесь будет логика для подсчета количества изделий
+    return {"product_id": product_id, "count": 100}  # Пример ответа, пока без реальной логики
 
-@app.delete("/breads/{bread_name}/", response_model=BreadType, tags=["Breads"])
-async def delete_bread(bread_name: str):
-    if bread_name not in breads:
-        raise HTTPException(status_code=404, detail="Bread not found")
-    deleted_bread = breads.pop(bread_name)
-    return deleted_bread
-
-@app.post("/count/", response_model=BreadCounting, tags=["Bread Counts"])
-async def count_bread(bread_name: str, counting_value: int, start_timestamp : datetime, end_timestamp : datetime):
-    if bread_name not in breads:
-        raise HTTPException(status_code=404, detail="Bread type not found")
-    if not breads[bread_name].enabled:
-        raise HTTPException(status_code=400, detail="Bread type is disabled")
-
-    return BreadCounting(bread_type=bread_name, counting_value=counting_value,  start_time=start_timestamp,
-        end_time=end_timestamp)
-
-@app.get("/count/", response_model=BreadCounting, tags=["Bread Counts"])
-async def get_count(bread_name: str, start_timestamp : datetime, duration : int):
-    if bread_name not in breads:
-        raise HTTPException(status_code=404, detail="Bread type not found")
-    if not breads[bread_name].enabled:
-        raise HTTPException(status_code=400, detail="Bread type is disabled")
-
-    return 1000
-
-@app.post("/cameras/", response_model=Camera, tags=["Cameras"])
-async def create_camera(camera: Camera):
-    camera_id = len(cameras) + 1
-    cameras[camera_id] = camera
-    return camera
-
-@app.get("/cameras/", response_model=List[Camera], tags=["Cameras"])
-async def get_cameras():
-    return list(cameras.values())
-
-@app.put("/cameras/{camera_id}/", response_model=Camera, tags=["Cameras"])
-async def update_camera(camera_id: int, camera: Camera):
-    if camera_id not in cameras:
-        raise HTTPException(status_code=404, detail="Camera not found")
-    cameras[camera_id] = camera
-    return camera
-
-@app.delete("/cameras/{camera_id}/", response_model=Camera, tags=["Cameras"])
-async def delete_camera(camera_id: int):
-    if camera_id not in cameras:
-        raise HTTPException(status_code=404, detail="Camera not found")
-    deleted_camera = cameras.pop(camera_id)
-    return deleted_camera
+# Просмотр количества изделий за период времени
+@app.get("/bread/count/{product_id}/period/")
+def count_product_period(product_id: int, start_date: datetime, end_date: datetime):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("SELECT SUM(count) FROM counting_results WHERE product_id=? AND start_period BETWEEN ? AND ?",
+              (product_id, start_date, end_date))
+    count_result = c.fetchone()[0]
+    conn.close()
+    return {"product_id": product_id, "start_date": start_date, "end_date": end_date, "count": count_result}
 
 
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# Просмотр статистики по конкретному конвейеру (камере)
+@app.get("/camera/{camera_id}/period/")
+def count_product_period_camera(camera_id: int, start_date: datetime, end_date: datetime):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute(
+        "SELECT product_id, SUM(count) FROM counting_results WHERE camera_id=? AND start_period BETWEEN ? AND ? GROUP BY product_id",
+        (camera_id, start_date, end_date))
+    results = c.fetchall()
+    statistics = []
+    for result in results:
+        product_id, count = result
+        statistics.append({"product_id": product_id, "count": count})
+    conn.close()
+    return {"camera_id": camera_id, "start_date": start_date, "end_date": end_date, "statistics": statistics}
