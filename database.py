@@ -1,8 +1,15 @@
+import os
 import sqlite3
 
 # Подключение к базе данных
-conn = sqlite3.connect('counting_system.db')
-c = conn.cursor()
+# Проверка существования файла базы данных
+db_filename = 'counting_system.db'
+if os.path.isfile(db_filename):
+    print("База данных уже существует.")
+else:
+    # Создание новой базы данных
+    conn = sqlite3.connect(db_filename)
+    c = conn.cursor()
 
 # Создание таблицы для камер видеонаблюдения
 c.execute('''CREATE TABLE IF NOT EXISTS cameras (
