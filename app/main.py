@@ -1,100 +1,158 @@
-from fastapi import FastAPI, HTTPException, Path, Query
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, Path, Query, Depends
 from datetime import datetime
-import sqlite3
+
+from sqlalchemy import func
+from sqlalchemy.orm import Session, Session
+from sqlalchemy.exc import IntegrityError
+
+from app import data_models  as models
+from sqlalchemy.orm import  sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from os import environ
 
 app = FastAPI()
 
-# Модель для камер видеонаблюдения
+# Указываем параметры подключения к базе данных PostgreSQL
+SQLALCHEMY_DATABASE_URL = environ.get("DATABASE_URL")
+
+# Создаем движок базы данных
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+Base = declarative_base()
+
+# Создаем таблицы в базе данных
+Base.metadata.create_all(bind=engine)
+
+# Создаем сессию для работы с базой данных
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+from pydantic import BaseModel
+from typing import Optional
+
 class Camera(BaseModel):
+    camera_id: int
     name: str
-    description: str
-    rtsp_stream: str
-    selection_area: str
-    counting_line: str
+    description: Optional[str] = None
+    rtsp_stream: Optional[str] = None
+    selection_area: Optional[str] = None
+    counting_line: Optional[str] = None
 
-# Модель для хлебобулочных изделий
+
 class BreadProduct(BaseModel):
+    product_id: int
     name: str
-    photos: str
-    video: str
+    photos: Optional[str] = None
+    video: Optional[str] = None
 
-# Функция подключения к базе данных
-def connect_db():
-    return sqlite3.connect("counting_system.db")
+class CountingResult(BaseModel):
+    result_id: int
+    camera_id: int
+    product_id: int
+    start_period: datetime
+    end_period: datetime
+    count: int
+
+
+# Функция для получения сессии базы данных
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # Подключение к rtsp-потоку
 @app.post("/cameras/")
-def create_camera(camera: Camera):
-    conn = connect_db()
-    c = conn.cursor()
-    c.execute("INSERT INTO cameras (name, description, rtsp_stream, selection_area, counting_line) VALUES (?, ?, ?, ?, ?)",
-              (camera.name, camera.description, camera.rtsp_stream, camera.selection_area, camera.counting_line))
-    conn.commit()
-    conn.close()
-    return {"message": "Camera created successfully"}
+def create_camera(camera: Camera, db: Session = Depends(get_db)):
+    try:
+        db_camera = models.Camera(**camera.dict())
+        db.add(db_camera)
+        db.commit()
+        return {"message": "Camera created successfully"}
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="Camera with this name already exists")
 
 # Просмотр списка всех камер
 @app.get("/cameras/")
-def get_cameras():
-    conn = connect_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM cameras")
-    cameras = c.fetchall()
-    conn.close()
+def get_cameras(db: Session = Depends(get_db)):
+    cameras = db.query(models.Camera).all()
     return {"cameras": cameras}
 
 # Изменение информации о камере
 @app.put("/cameras/{camera_id}")
-def update_camera(camera_id: int, camera: Camera):
-    conn = connect_db()
-    c = conn.cursor()
-    c.execute("UPDATE cameras SET name=?, description=?, rtsp_stream=?, selection_area=?, counting_line=? WHERE camera_id=?",
-              (camera.name, camera.description, camera.rtsp_stream, camera.selection_area, camera.counting_line, camera_id))
-    conn.commit()
-    conn.close()
-    return {"message": "Camera updated successfully"}
+def update_camera(camera_id: int, camera: Camera, db: Session = Depends(get_db)):
+    db_camera = db.query(models.Camera).filter(models.Camera.camera_id == camera_id).first()
+    if db_camera:
+        for var, value in vars(camera).items():
+            setattr(db_camera, var, value) if value else None
+        db.commit()
+        return {"message": "Camera updated successfully"}
+    raise HTTPException(status_code=404, detail="Camera not found")
 
 # Удаление камеры
 @app.delete("/cameras/{camera_id}")
-def delete_camera(camera_id: int):
-    conn = connect_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM cameras WHERE camera_id=?", (camera_id,))
-    conn.commit()
-    conn.close()
-    return {"message": "Camera deleted successfully"}
+def delete_camera(camera_id: int, db: Session = Depends(get_db)):
+    db_camera = db.query(models.Camera).filter(models.Camera.camera_id == camera_id).first()
+    if db_camera:
+        db.delete(db_camera)
+        db.commit()
+        return {"message": "Camera deleted successfully"}
+    raise HTTPException(status_code=404, detail="Camera not found")
+
+
+# Создание нового изделия
+@app.post("/bread/")
+def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
+    try:
+        db_bread = models.BreadProduct(**bread.dict())
+        db.add(db_bread)
+        db.commit()
+        return {"message": "Bread product created successfully"}
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="Bread product with this name already exists")
+
+# Просмотр списка всех изделий
+@app.get("/bread/")
+def get_breads(db: Session = Depends(get_db)):
+    breads = db.query(models.BreadProduct).all()
+    return {"breads": breads}
+
+# Удаление изделия
+@app.delete("/bread/{bread_id}")
+def delete_bread(bread_id: int, db: Session = Depends(get_db)):
+    db_bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == bread_id).first()
+    if db_bread:
+        db.delete(db_bread)
+        db.commit()
+        return {"message": "Bread product deleted successfully"}
+    raise HTTPException(status_code=404, detail="Bread product not found")
+
 
 # Подсчет изделий
 @app.get("/bread/count/{product_id}")
-def count_product(product_id: int):
+def count_product(product_id: int, db: Session = Depends(get_db)):
     # Здесь будет логика для подсчета количества изделий
     return {"product_id": product_id, "count": 100}  # Пример ответа, пока без реальной логики
 
+
 # Просмотр количества изделий за период времени
 @app.get("/bread/count/{product_id}/period/")
-def count_product_period(product_id: int, start_date: datetime, end_date: datetime):
-    conn = connect_db()
-    c = conn.cursor()
-    c.execute("SELECT SUM(count) FROM counting_results WHERE product_id=? AND start_period BETWEEN ? AND ?",
-              (product_id, start_date, end_date))
-    count_result = c.fetchone()[0]
-    conn.close()
+def count_product_period(product_id: int, start_date: datetime, end_date: datetime, db: Session = Depends(get_db)):
+    count_result = db.query(func.sum(models.CountingResult.count)). \
+        filter(models.CountingResult.product_id == product_id). \
+        filter(models.CountingResult.start_period.between(start_date, end_date)).scalar()
     return {"product_id": product_id, "start_date": start_date, "end_date": end_date, "count": count_result}
 
 
 # Просмотр статистики по конкретному конвейеру (камере)
 @app.get("/camera/{camera_id}/period/")
-def count_product_period_camera(camera_id: int, start_date: datetime, end_date: datetime):
-    conn = connect_db()
-    c = conn.cursor()
-    c.execute(
-        "SELECT product_id, SUM(count) FROM counting_results WHERE camera_id=? AND start_period BETWEEN ? AND ? GROUP BY product_id",
-        (camera_id, start_date, end_date))
-    results = c.fetchall()
-    statistics = []
-    for result in results:
-        product_id, count = result
-        statistics.append({"product_id": product_id, "count": count})
-    conn.close()
+def count_product_period_camera(camera_id: int, start_date: datetime, end_date: datetime,
+                                db: Session = Depends(get_db)):
+    results = db.query(models.CountingResult.product_id, func.sum(models.CountingResult.count)). \
+        filter(models.CountingResult.camera_id == camera_id). \
+        filter(models.CountingResult.start_period.between(start_date, end_date)). \
+        group_by(models.CountingResult.product_id).all()
+
+    statistics = [{"product_id": product_id, "count": count} for product_id, count in results]
     return {"camera_id": camera_id, "start_date": start_date, "end_date": end_date, "statistics": statistics}

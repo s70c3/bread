@@ -1,18 +1,17 @@
-# Используем базовый образ Python
-FROM python:3.9-slim
+#
+FROM python:3.9
 
-# Устанавливаем переменную окружения для работы внутри контейнера
-ENV PYTHONUNBUFFERED 1
+#
+WORKDIR /code
 
-# Создаем директорию для приложения внутри образа
-RUN mkdir /app
 
-# Копируем файлы зависимостей и код в директорию приложения
-WORKDIR /app
-COPY . /app
+COPY requirements.txt ./
 
-# Устанавливаем зависимости из requirements.txt
+#
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Команда для запуска сервера uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+#
+COPY . .
+
+#
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

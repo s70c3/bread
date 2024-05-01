@@ -1,16 +1,27 @@
-version: "3.8"
+version: '3'
 
 services:
-  app:
+  web:
     build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
     depends_on:
       - db
+    volumes:
+      - ./:/code:ro
+    environment:
+      - DATABASE_URL=postgresql://postgres:bread@db:5432/bread
+    ports:
+      - "8000:80"
 
   db:
-    image: "sqlite:latest"
-    volumes:
-      - ./counting_system.db:/app/counting_system.db
+      image: postgres:15-alpine
+      volumes:
+        - postgres_data:/var/lib/postgresql/data/
+      expose:
+        - 5432
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=bread
+        - POSTGRES_DB=bread
+
+volumes:
+      postgres_data:
