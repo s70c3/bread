@@ -5,53 +5,12 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, Session
 from sqlalchemy.exc import IntegrityError
 
-from app import data_models  as models
-from sqlalchemy.orm import  sessionmaker
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from os import environ
+from app import database as models
+from app.api_models import *
 
 app = FastAPI()
 
-# Указываем параметры подключения к базе данных PostgreSQL
-SQLALCHEMY_DATABASE_URL = environ.get("DATABASE_URL")
-
-# Создаем движок базы данных
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-Base = declarative_base()
-
-# Создаем таблицы в базе данных
-Base.metadata.create_all(bind=engine)
-
-# Создаем сессию для работы с базой данных
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-from pydantic import BaseModel
-from typing import Optional
-
-class Camera(BaseModel):
-    camera_id: int
-    name: str
-    description: Optional[str] = None
-    rtsp_stream: Optional[str] = None
-    selection_area: Optional[str] = None
-    counting_line: Optional[str] = None
-
-
-class BreadProduct(BaseModel):
-    product_id: int
-    name: str
-    photos: Optional[str] = None
-    video: Optional[str] = None
-
-class CountingResult(BaseModel):
-    result_id: int
-    camera_id: int
-    product_id: int
-    start_period: datetime
-    end_period: datetime
-    count: int
+from app.database import SessionLocal
 
 
 # Функция для получения сессии базы данных
