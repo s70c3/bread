@@ -5,12 +5,12 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, Session
 from sqlalchemy.exc import IntegrityError
 
-from app import database as models
-from app.api_models import *
+from backend import database as models
+from backend.api_models import *
 
 app = FastAPI()
 
-from app.database import SessionLocal
+from backend.database import SessionLocal
 
 
 # Функция для получения сессии базы данных

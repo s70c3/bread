@@ -15,3 +15,7 @@ starlette==0.14.2
 typing_extensions==4.11.0
 uvicorn==0.15.0
 psycopg2
+autodistill
+autodistill-yolov8
+autodistill-grounding-dino
+supervision==0.21.0rc3
