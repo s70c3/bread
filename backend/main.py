@@ -71,6 +71,19 @@ def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Bread product with this name already exists")
 
+
+# Создание нового изделия
+@app.post("/label/")
+def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
+    try:
+        db_bread = models.BreadProduct(**bread.dict())
+        db.add(db_bread)
+        db.commit()
+        return {"message": "Bread product created successfully"}
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="Bread product with this name already exists")
+
+
 # Просмотр списка всех изделий
 @app.get("/bread/")
 def get_breads(db: Session = Depends(get_db)):

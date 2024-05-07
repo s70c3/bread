@@ -19,3 +19,7 @@ autodistill
 autodistill-yolov8
 autodistill-grounding-dino
 supervision==0.21.0rc3
+shapely
+lapx>=0.5.2
+Cython>=0.29.32
+numpy>=1.21.6
