@@ -38,7 +38,7 @@ def label(source, dist,  name="bread",  is_packed = False):
         extension=".png",
         output_folder=DATASET_DIR_PATH)
 
-    return dataset
+    return DATASET_DIR_PATH
 
 def train_yolo(dataset_dir, name):
     DATA_YAML_PATH = f"{dataset_dir}/data.yaml"
