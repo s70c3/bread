@@ -5,10 +5,13 @@ services:
     build: .
     depends_on:
       - db
+      - redis
     volumes:
       - ./:/code:ro
     environment:
       - DATABASE_URL=postgresql://postgres:bread@db:5432/bread
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     ports:
       - "8000:80"
 
@@ -22,6 +25,34 @@ services:
         - POSTGRES_USER=postgres
         - POSTGRES_PASSWORD=bread
         - POSTGRES_DB=bread
+
+  worker:
+    build: ./project
+    command: celery -A worker.celery worker --loglevel=info --logfile=logs/celery.log
+    volumes:
+      - ./project:/usr/src/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - web
+      - redis
+
+  redis:
+    image: redis:7
+
+  dashboard:
+    build: ./project
+    command: celery --broker=redis://redis:6379/0 flower --port=5555
+    ports:
+      - 5556:5555
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - web
+      - redis
+      - worker
 
 volumes:
       postgres_data:
