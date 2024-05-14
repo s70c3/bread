@@ -1,16 +1,15 @@
-from fastapi import FastAPI, HTTPException, Path, Query, Depends
-from datetime import datetime
+from fastapi import FastAPI, HTTPException, Depends
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session, Session
+from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from backend import database as models
-from backend.api_models import *
+from backend.database.api_models import *
 
 app = FastAPI()
 
-from backend.database import SessionLocal
+from backend.database.database import SessionLocal
 
 
 # Функция для получения сессии базы данных
@@ -72,17 +71,13 @@ def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Bread product with this name already exists")
 
 
+
 # Создание нового изделия
 @app.post("/label/")
-def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
-    try:
-        db_bread = models.BreadProduct(**bread.dict())
-        db.add(db_bread)
-        db.commit()
-        return {"message": "Bread product created successfully"}
-    except IntegrityError:
-        raise HTTPException(status_code=400, detail="Bread product with this name already exists")
-
+def create_dataset(dataset: Dataset, db: Session = Depends(get_db)):
+    stream = db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().scalar()
+    bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.bread_id).first().scalar()
+    print(bread, stream)
 
 # Просмотр списка всех изделий
 @app.get("/bread/")
