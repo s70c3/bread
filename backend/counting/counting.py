@@ -94,15 +94,6 @@ class Counting(object):
 
                 print(file_index, line_counter.out_count)
 
-                # frame = cv2.resize(frame, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_LINEAR)
-                # cv2.imshow("Thread"+str(file_index),frame)
-                #
-                # key = cv2.waitKey(1)
-                # if key == ord('q'):
-                #     break
-                # ret, buffer = cv2.imencode('.jpg', frame)
-                # frame = buffer.tobytes()
-                # yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
                 sink.write_frame(frame)
 
                 # Release video sources
