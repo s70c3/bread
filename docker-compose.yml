@@ -13,7 +13,7 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     ports:
-      - "8000:80"
+      - "8000:8000"
     container_name: backend
 
   frontend:
@@ -25,8 +25,6 @@ services:
     volumes:
       - ./frontend:/app
     restart: always
-    networks:
-      - app
     container_name: frontend
 
   db:
@@ -42,7 +40,7 @@ services:
 
   worker:
     build: backend
-    command: celery -A worker.celery worker --loglevel=info --logfile=logs/celery.log
+    command: celery -A autolabel.worker.celery worker --loglevel=info
     volumes:
       - ./backend:/usr/src/app
     environment:
@@ -68,7 +66,3 @@ services:
       - worker
 volumes:
       postgres_data:
-
-networks:
-  app:
-    driver: bridge
