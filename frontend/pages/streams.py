@@ -1,181 +1,55 @@
-"""Media streamings"""
-
-import logging
+# Python In-built packages
 from pathlib import Path
-from typing import Dict, Optional, cast
+import PIL
 
-import av
-import cv2
+# External packages
 import streamlit as st
-from aiortc.contrib.media import MediaPlayer
-from streamlit_webrtc import WebRtcMode, WebRtcStreamerContext, webrtc_streamer
 
-import streamlit as st
-from twilio.base.exceptions import TwilioRestException
-from twilio.rest import Client
-import urllib.request
-from pathlib import Path
-import os
-def get_ice_servers():
-    """Use Twilio's TURN server because Streamlit Community Cloud has changed
-    its infrastructure and WebRTC connection cannot be established without TURN server now.  # noqa: E501
-    We considered Open Relay Project (https://www.metered.ca/tools/openrelay/) too,
-    but it is not stable and hardly works as some people reported like https://github.com/aiortc/aiortc/issues/832#issuecomment-1482420656  # noqa: E501
-    See https://github.com/whitphx/streamlit-webrtc/issues/1213
-    """
+# Local Modules
+import pages.utils.helper as helper
+import pages.utils.settings as settings
 
-    # Ref: https://www.twilio.com/docs/stun-turn/api
-    try:
-        account_sid = ""
-        auth_token = ""
-    except KeyError:
-        logger.warning(
-            "Twilio credentials are not set. Fallback to a free STUN server from Google."  # noqa: E501
-        )
-        return [{"urls": ["stun:stun.l.google.com:19302"]}]
-
-    client = Client(account_sid, auth_token)
-
-    try:
-        token = client.tokens.create()
-    except TwilioRestException as e:
-        st.warning(
-            f"Error occurred while accessing Twilio API. Fallback to a free STUN server from Google. ({e})"  # noqa: E501
-        )
-        return [{"urls": ["stun:stun.l.google.com:19302"]}]
-
-    return token.ice_servers
-
-
-# This code is based on https://github.com/streamlit/demo-self-driving/blob/230245391f2dda0cb464008195a470751c01770b/streamlit_app.py#L48  # noqa: E501
-def download_file(url, download_to: Path, expected_size=None):
-    # Don't download the file twice.
-    # (If possible, verify the download using the file length.)
-    if download_to.exists():
-        if expected_size:
-            if download_to.stat().st_size == expected_size:
-                return
-        else:
-            st.info(f"{url} is already downloaded.")
-            if not st.button("Download again?"):
-                return
-
-    download_to.parent.mkdir(parents=True, exist_ok=True)
-
-    # These are handles to two visual elements to animate.
-    weights_warning, progress_bar = None, None
-    try:
-        weights_warning = st.warning("Downloading %s..." % url)
-        progress_bar = st.progress(0)
-        with open(download_to, "wb") as output_file:
-            with urllib.request.urlopen(url) as response:
-                length = int(response.info()["Content-Length"])
-                counter = 0.0
-                MEGABYTES = 2.0**20.0
-                while True:
-                    data = response.read(8192)
-                    if not data:
-                        break
-                    counter += len(data)
-                    output_file.write(data)
-
-                    # We perform animation by overwriting the elements.
-                    weights_warning.warning(
-                        "Downloading %s... (%6.2f/%6.2f MB)"
-                        % (url, counter / MEGABYTES, length / MEGABYTES)
-                    )
-                    progress_bar.progress(min(counter / length, 1.0))
-    # Finally, we remove these visual elements by calling .empty().
-    finally:
-        if weights_warning is not None:
-            weights_warning.empty()
-        if progress_bar is not None:
-            progress_bar.empty()
-
-HERE = Path(__file__).parent
-ROOT = HERE.parent
-
-logger = logging.getLogger(__name__)
-
-
-MEDIAFILES: Dict[str, Dict] = {
-    "rtsp://admin:Novichek2024$$@localhost:8080/ISAPI/Streaming/Channels/101": {
-        "url": "rtsp://admin:Novichek2024$$@localhost:8080/ISAPI/Streaming/Channels/101",
-        "type": "video",
-    },
-}
-
-media_file_label = st.radio("Select a media source to stream", tuple(MEDIAFILES.keys()))
-media_file_info = MEDIAFILES[cast(str, media_file_label)]
-if "local_file_path" in media_file_info:
-    download_file(media_file_info["url"], media_file_info["local_file_path"])
-
-
-def create_player():
-        return MediaPlayer(media_file_info["url"])
-
-    # NOTE: To stream the video from webcam, use the code below.
-    # return MediaPlayer(
-    #     "1:none",
-    #     format="avfoundation",
-    #     options={"framerate": "30", "video_size": "1280x720"},
-    # )
-
-
-key = f"media-streaming-{media_file_label}"
-ctx: Optional[WebRtcStreamerContext] = st.session_state.get(key)
-if media_file_info["type"] == "video" and ctx and ctx.state.playing:
-    _type = st.radio("Select transform type", ("noop", "cartoon", "edges", "rotate"))
-else:
-    _type = "noop"
-
-
-def video_frame_callback(frame: av.VideoFrame) -> av.VideoFrame:
-    img = frame.to_ndarray(format="bgr24")
-
-    if _type == "noop":
-        pass
-    elif _type == "cartoon":
-        # prepare color
-        img_color = cv2.pyrDown(cv2.pyrDown(img))
-        for _ in range(6):
-            img_color = cv2.bilateralFilter(img_color, 9, 9, 7)
-        img_color = cv2.pyrUp(cv2.pyrUp(img_color))
-
-        # prepare edges
-        img_edges = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        img_edges = cv2.adaptiveThreshold(
-            cv2.medianBlur(img_edges, 7),
-            255,
-            cv2.ADAPTIVE_THRESH_MEAN_C,
-            cv2.THRESH_BINARY,
-            9,
-            2,
-        )
-        img_edges = cv2.cvtColor(img_edges, cv2.COLOR_GRAY2RGB)
-
-        # combine color and edges
-        img = cv2.bitwise_and(img_color, img_edges)
-    elif _type == "edges":
-        # perform edge detection
-        img = cv2.cvtColor(cv2.Canny(img, 100, 200), cv2.COLOR_GRAY2BGR)
-    elif _type == "rotate":
-        # rotate image
-        rows, cols, _ = img.shape
-        M = cv2.getRotationMatrix2D((cols / 2, rows / 2), frame.time * 45, 1)
-        img = cv2.warpAffine(img, M, (cols, rows))
-
-    return av.VideoFrame.from_ndarray(img, format="bgr24")
-
-
-webrtc_streamer(
-    key=key,
-    mode=WebRtcMode.RECVONLY,
-    rtc_configuration={"iceServers": get_ice_servers()},
-    media_stream_constraints={
-        "video": media_file_info["type"] == "video",
-        "audio": media_file_info["type"] == "audio",
-    },
-    player_factory=create_player,
-    video_frame_callback=video_frame_callback,
+# Setting page layout
+st.set_page_config(
+    page_title="Object Detection using YOLOv8",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+
+# Main page heading
+st.title("Подсчёт объектов в реальном времени")
+
+# Sidebar
+st.sidebar.header("Подсчёт в режиме онлайн")
+
+confidence = float(st.sidebar.slider(
+    "Select Model Confidence", 25, 100, 40)) / 100
+
+model_path = Path(settings.DETECTION_MODEL)
+
+# Load Pre-trained ML Model
+try:
+    model = helper.load_model(model_path)
+except Exception as ex:
+    st.error(f"Unable to load model. Check the specified path: {model_path}")
+    st.error(ex)
+
+st.sidebar.header("Image/Video Config")
+
+import requests
+
+response = requests.get('http://backend:8000/sources')
+
+if response.status_code == 200:
+    sources = response.json()
+    print(sources)
+else:
+    print('Failed to get sources')
+
+source_radio = st.sidebar.radio(
+    "Выберите камеру", sources)
+
+# If image is selected
+
+helper.play_rtsp_stream(confidence, model)

@@ -2,4 +2,5 @@ streamlit
 streamlit_webrtc
 av
 aiortc
-ultralytics
+ultralytics==8.2.16
+streamlit-image-coordinates==0.1.6
