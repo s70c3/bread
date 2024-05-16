@@ -2,7 +2,7 @@
 from ultralytics import YOLO
 import streamlit as st
 import cv2
-#
+import supervision as sv
 def load_model(model_path):
     """
     Loads a YOLO object detection model from the specified model_path.
@@ -26,7 +26,7 @@ def display_tracker_options():
     return is_display_tracker, None
 
 
-def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=None, tracker=None):
+def _display_detected_frames(conf, model, st_frame, frame,  tracker=None, line_counter=None, line_annotator=None, box_annotator=None):
     """
     Display the detected objects on a video frame using the YOLOv8 model.
 
@@ -42,18 +42,24 @@ def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=N
     """
 
     # Resize the image to a standard size
-    image = cv2.resize(image, (720, int(720*(9/16))))
 
-    # Display object tracking, if specified
-    if is_display_tracking:
-        res = model.track(image, conf=conf, persist=True, tracker=tracker)
-    else:
-        # Predict the objects in the image using the YOLOv8 model
-        res = model.predict(image, conf=conf)
+
+    results = model(frame)[0]
+
+    detections = sv.Detections.from_ultralytics(results)
+    detections = tracker.update_with_detections(detections)
+
+    # updating line counter
+    line_counter.trigger(detections=detections)
+    # format custom labels
+    # dict maping class_id to class_name
+
+    frame = box_annotator.annotate(scene=frame, detections=detections)
+    line_annotator.annotate(frame=frame, line_counter=line_counter)
+    frame = cv2.resize(frame, (720, int(720 * (9 / 16))))
 
     # # Plot the detected objects on the video frame
-    res_plotted = res[0].plot()
-    st_frame.image(res_plotted,
+    st_frame.image(frame,
                    caption='Detected Video',
                    channels="BGR",
                    use_column_width=True
@@ -78,19 +84,29 @@ def play_rtsp_stream(conf, model):
     source_rtsp = st.sidebar.text_input("rtsp stream url:")
     st.sidebar.caption('Example URL: rtsp://admin:12345@192.168.1.210:554/Streaming/Channels/101')
     tracker = sv.ByteTrack()
+    LINE_START = sv.Point(0, 2000)
+    LINE_END = sv.Point(3000, 2000)
+    line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
+    # create instance of BoxAnnotator and LineCounterAnnotator
+    line_annotator = sv.LineZoneAnnotator(thickness=4, text_thickness=4, text_scale=2)
+    box_annotator = sv.BoxAnnotator(color=sv.ColorPalette.default(), thickness=4, text_thickness=4, text_scale=2)
+
     if st.sidebar.button('Detect Objects'):
         try:
             vid_cap = cv2.VideoCapture(source_rtsp)
             st_frame = st.empty()
             while (vid_cap.isOpened()):
                 success, image = vid_cap.read()
+
                 if success:
                     _display_detected_frames(conf,
                                              model,
                                              st_frame,
                                              image,
-                                             is_display_tracker,
-                                             tracker
+                                             tracker,
+                                             line_counter,
+                                             line_annotator,
+                                             box_annotator
                                              )
                 else:
                     vid_cap.release()
@@ -112,11 +128,8 @@ def play_rtsp_stream(conf, model):
 #
 # # Track objects in frames if available
 # results = model(frame)[0]
-# # frame = counter.start_counting(frame, results)
-# detections = sv.Detections.from_ultralytics(results)
-# detections = tracker.update_with_detections(detections)
-# LINE_START = sv.Point(0, 2000)
-# LINE_END = sv.Point(3000, 2000)
+# #
+
 #
 # line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
 # # create instance of BoxAnnotator and LineCounterAnnotator
