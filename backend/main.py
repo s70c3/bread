@@ -62,7 +62,6 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db)):
 # Создание нового изделия
 @app.post("/bread/")
 def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
-    print(**bread.dict())
     try:
         db_bread = models.BreadProduct(**bread.dict())
         db.add(db_bread)
