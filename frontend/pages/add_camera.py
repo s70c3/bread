@@ -2,10 +2,10 @@ import streamlit as st
 import requests
 import base64
 
-st.set_page_config(page_title="Добавить новый продукт", page_icon="📈")
+st.set_page_config(page_title="Добавить новую камеру", page_icon="📈")
 
-st.markdown("Добавить нового продукта")
-st.sidebar.header("Добавление нового продукта")
+st.markdown("Добавление новой камеры")
+st.sidebar.header("Добавление новой камеры")
 
 with st.form(key="bread_form"):
     text_input = st.text_input("Введите название камеры")
@@ -19,7 +19,7 @@ with st.form(key="bread_form"):
 
 if submit_button:
     # Send the images to FastAPI
-    response = requests.post('http://backend:8000/bread/',
+    response = requests.post('http://backend:8000/camera/',
                              json={"name": text_input, "rtsp_stream" : address, "description" : description})
     if response.status_code == 200:
         st.write('Images uploaded successfully')

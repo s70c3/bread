@@ -17,12 +17,13 @@ with st.form(key="bread_form"):
     for uploaded_file in uploaded_files:
         bytes_data = uploaded_file.read()
         base64_str = base64.b64encode(bytes_data).decode()
-        st.image(bytes_data)
+        # st.image(bytes_data)
         images_base64.append(base64_str)
 
     submit_button = st.form_submit_button(label='Submit')
 
 if submit_button:
+    print(images_base64)
     # Send the images to FastAPI
     response = requests.post('http://backend:8000/bread/',
                              json={"name": text_input, "photos": images_base64})
@@ -30,3 +31,5 @@ if submit_button:
         st.write('Images uploaded successfully')
     else:
         st.write('Failed to upload images')
+        print(response.status_code)
+        print(response.text)

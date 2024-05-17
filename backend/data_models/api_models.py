@@ -4,27 +4,24 @@ from typing import Optional
 from datetime import datetime
 
 class Camera(BaseModel):
-    camera_id: int
     name: str
     description: Optional[str] = None
     rtsp_stream: Optional[str] = None
+
+
+
+class BreadProduct(BaseModel):
+    name: str
+    photos: Optional[str] = None
+
+class CountRequest(BaseModel):
+    camera_id: int
+    product_id: int
     selection_area: Optional[str] = None
     counting_line: Optional[str] = None
 
 
-class BreadProduct(BaseModel):
-    product_id: int
-    name: str
-    photos: Optional[str] = None
-
-class Dataset(BaseModel):
-    dataset_id: int
-    camera_id: int
-    product_id: int
-
-
 class CountingResult(BaseModel):
-    result_id: int
     camera_id: int
     product_id: int
     start_period: datetime

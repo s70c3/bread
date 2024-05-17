@@ -39,7 +39,7 @@ st.sidebar.header("Image/Video Config")
 
 import requests
 
-response = requests.get('http://backend:8000/sources')
+response = requests.get('http://backend:8000/cameras')
 
 if response.status_code == 200:
     sources = response.json()

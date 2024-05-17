@@ -4,12 +4,12 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from backend import database as models
-from backend.database.api_models import *
+import backend.data_models.db_models as models
+from backend.data_models.api_models import *
 
 app = FastAPI()
 
-from backend.database.database import SessionLocal
+from backend.data_models.db_models import SessionLocal
 
 
 # Функция для получения сессии базы данных
@@ -21,7 +21,7 @@ def get_db():
         db.close()
 
 # Подключение к rtsp-потоку
-@app.post("/cameras/")
+@app.post("/camera/")
 def create_camera(camera: Camera, db: Session = Depends(get_db)):
     try:
         db_camera = models.Camera(**camera.dict())
@@ -32,13 +32,13 @@ def create_camera(camera: Camera, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Camera with this name already exists")
 
 # Просмотр списка всех камер
-@app.get("/cameras/")
+@app.get("/camera/")
 def get_cameras(db: Session = Depends(get_db)):
     cameras = db.query(models.Camera).all()
     return {"cameras": cameras}
 
 # Изменение информации о камере
-@app.put("/cameras/{camera_id}")
+@app.put("/camera/{camera_id}")
 def update_camera(camera_id: int, camera: Camera, db: Session = Depends(get_db)):
     db_camera = db.query(models.Camera).filter(models.Camera.camera_id == camera_id).first()
     if db_camera:
@@ -49,7 +49,7 @@ def update_camera(camera_id: int, camera: Camera, db: Session = Depends(get_db))
     raise HTTPException(status_code=404, detail="Camera not found")
 
 # Удаление камеры
-@app.delete("/cameras/{camera_id}")
+@app.delete("/camera/{camera_id}")
 def delete_camera(camera_id: int, db: Session = Depends(get_db)):
     db_camera = db.query(models.Camera).filter(models.Camera.camera_id == camera_id).first()
     if db_camera:
@@ -62,8 +62,8 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db)):
 # Создание нового изделия
 @app.post("/bread/")
 def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
+    print(**bread.dict())
     try:
-        print(**bread.dict())
         db_bread = models.BreadProduct(**bread.dict())
         db.add(db_bread)
         db.commit()
@@ -75,7 +75,7 @@ def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
 
 # Создание нового изделия
 @app.post("/label/")
-def create_dataset(dataset: Dataset, db: Session = Depends(get_db)):
+def create_dataset(dataset: CountRequest, db: Session = Depends(get_db)):
     stream = db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().scalar()
     bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.bread_id).first().scalar()
     print(bread, stream)
