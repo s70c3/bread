@@ -1,6 +1,6 @@
 
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class Camera(BaseModel):
@@ -12,7 +12,7 @@ class Camera(BaseModel):
 
 class BreadProduct(BaseModel):
     name: str
-    photos: Optional[str] = None
+    photos: Optional[List[str]] = None
 
 class CountRequest(BaseModel):
     camera_id: int
