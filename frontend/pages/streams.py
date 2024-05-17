@@ -39,17 +39,18 @@ st.sidebar.header("Image/Video Config")
 
 import requests
 
-response = requests.get('http://backend:8000/cameras')
+response = requests.get('http://backend:8000/camera')
 
 if response.status_code == 200:
     sources = response.json()
+    sources = {camera['name']: camera['rtsp_stream'] for camera in sources['cameras']}
     print(sources)
 else:
     print('Failed to get sources')
 
 source_radio = st.sidebar.radio(
-    "Выберите камеру", sources)
+    "Выберите камеру", sources.keys())
 
-# If image is selected
+stream_address= str(sources.get(source_radio))
 
-helper.play_rtsp_stream(confidence, model)
+helper.play_rtsp_stream(confidence, model, stream_address)

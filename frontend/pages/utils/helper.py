@@ -67,7 +67,7 @@ def _display_detected_frames(conf, model, st_frame, frame,  tracker=None, line_c
 
 
 
-def play_rtsp_stream(conf, model):
+def play_rtsp_stream(conf, model, source_rtsp):
     """
     Plays an rtsp stream. Detects Objects in real-time using the YOLOv8 object detection model.
 
@@ -81,8 +81,8 @@ def play_rtsp_stream(conf, model):
     Raises:
         None
     """
-    source_rtsp = st.sidebar.text_input("rtsp stream url:")
-    st.sidebar.caption('Example URL: rtsp://admin:12345@192.168.1.210:554/Streaming/Channels/101')
+    # source_rtsp = st.sidebar.text_input("rtsp stream url:")
+    # st.sidebar.caption('Example URL: rtsp://admin:12345@192.168.1.210:554/Streaming/Channels/101')
     tracker = sv.ByteTrack()
     LINE_START = sv.Point(0, 2000)
     LINE_END = sv.Point(3000, 2000)
