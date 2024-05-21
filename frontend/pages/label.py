@@ -7,8 +7,9 @@ import requests
 # Fetch the list of cameras
 response = requests.get('http://backend:8000/camera')
 if response.status_code == 200:
-    sources = response.json()
-    sources = {camera['name']: camera['rtsp_stream'] for camera in sources['cameras']}
+    sources_raw = response.json()
+    sources = {camera['name']: camera['rtsp_stream'] for camera in sources_raw['cameras']}
+    camera_ids = {camera['name']: camera['camera_id'] for camera in sources_raw['cameras']}
 else:
     print('Не получается получить список камер. Проверьте доступ к серверу.')
 
@@ -36,62 +37,18 @@ ret, frame = stream.read()
 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 frame = cv2.resize(frame, (720, int(720*(9/16))))
 
-
-# Create a drawable canvas with the frame as the background for drawing the square
-st.markdown("## Выделите область, окружающую конвейер.")
-canvas_result_square = st_canvas(
-    fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
-    stroke_width=2,
-    stroke_color='#e00',
-    background_image=Image.fromarray(frame),
-    update_streamlit=True,
-    height=frame.shape[0],
-    width=frame.shape[1],
-    drawing_mode='rect',
-    key="canvas_square",
-)
-
-# Create a drawable canvas with the frame as the background for drawing the line
-st.markdown("## Draw a line")
-canvas_result_line = st_canvas(
-    fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
-    stroke_width=2,
-    stroke_color='#e00',
-    background_image=Image.fromarray(frame),
-    update_streamlit=True,
-    height=frame.shape[0],
-    width=frame.shape[1],
-    drawing_mode='line',
-    key="canvas_line",
-)
-
-# The data in the canvas (lines, shapes, etc) is in the `canvas_result.json_data` attribute
-if canvas_result_square.json_data is not None and len(canvas_result_square.json_data["objects"])>0:
-    # Extract the coordinates of the square
-    x1 = canvas_result_square.json_data["objects"][0]["left"]
-    x2 = x1 + canvas_result_square.json_data["objects"][0]["width"]
-    y1 = canvas_result_square.json_data["objects"][0]["top"]
-    y2 = y1 + canvas_result_square.json_data["objects"][0]["height"]
-    st.write("Координаты ограничивающей области:", x1, y1, x2, y2)
-
-if canvas_result_line.json_data is not None and len(canvas_result_line.json_data["objects"])>0:
-    # Extract the coordinates of the line
-    lx1 = canvas_result_line.json_data["objects"][0]["left"]
-    lx2 = lx1 + canvas_result_line.json_data["objects"][0]["width"]
-    ly1 = canvas_result_line.json_data["objects"][0]["top"]
-    ly2 = ly1 + canvas_result_line.json_data["objects"][0]["height"]
-    st.write("Координаты линии подсчёта:", lx1, ly1, lx2, ly2)
+st.markdown("Проверьте, что на конвейере выбранный тип продукции.")
+st.image(frame)
 
 # Send the data to the backend
-if st.button('Submit'):
+if st.button('Подтвердить'):
     response = requests.post('http://backend:8000/label/', json={
-        'square': [x1, y1, x2, y2],
-        'line': [lx1, ly1, lx2, ly2],
-        'camera_id': sources[source_radio],
-        'bread_product_id': breads[bread_select]
+        'camera_id': camera_ids[source_radio],
+        'product_id': breads[bread_select],
+        'name' : bread_select
     })
     if response.status_code == 200:
-        st.write('Запрос на подсчёт отправлен успешно.')
+        st.write('Запрос на разметку отправлен успешно.')
     else:
         st.write('Не удалось отправить данные.')
         st.write(response.text)

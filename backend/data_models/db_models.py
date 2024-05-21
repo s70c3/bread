@@ -15,6 +15,7 @@ class Camera(Base):
 
     counting_results = relationship("CountingResult", back_populates="camera")
     counting_requests = relationship("CountingRequest", back_populates="camera")
+    labeling_requests = relationship("LabelingRequest", back_populates="camera")
 
 
 class BreadProduct(Base):
@@ -26,13 +27,24 @@ class BreadProduct(Base):
 
     counting_results = relationship("CountingResult", back_populates="product", overlaps="counting_requests")
     counting_requests = relationship("CountingRequest", back_populates="product", overlaps="counting_results")
+    labeling_requests = relationship("LabelingRequest", back_populates="product", overlaps="counting_results")
+
+
+class LabelingRequest(Base):
+    __tablename__ = 'labeling_requests'
+    product_id = Column(Integer, ForeignKey('bread_products.product_id'), primary_key=True)
+    camera_id = Column(Integer, ForeignKey('cameras.camera_id'), primary_key=True)
+    name = Column(String)
+
+    camera = relationship("Camera", back_populates="labeling_requests")
+    product = relationship("BreadProduct", back_populates="labeling_requests")
+
 
 
 class CountingRequest(Base):
     __tablename__ = 'counting_requests'
     product_id = Column(Integer, ForeignKey('bread_products.product_id'), primary_key=True)
     camera_id = Column(Integer, ForeignKey('cameras.camera_id'), primary_key=True)
-    name = Column(String, nullable=False)
     selection_area = Column(String)
     counting_line = Column(String)
 

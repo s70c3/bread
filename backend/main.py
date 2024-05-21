@@ -75,13 +75,13 @@ def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
 
 # Создание нового изделия
 @app.post("/label/")
-def create_dataset(dataset: CountRequest, db: Session = Depends(get_db)):
+def create_dataset(dataset: LabelingRequest, db: Session = Depends(get_db)):
     stream = db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream
-    bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.bread_id).first().name
+    bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.product_id).first().name
     print(bread, stream)
 
     # Start the label_data task in Celery
-    task = label_data.delay(stream, dataset.camera_id, dataset.bread_id, bread)
+    task = label_data.delay(stream, dataset.camera_id, dataset.product_id, bread)
 
     return {"message": "Task started", "task_id": str(task.id)}
 
@@ -92,7 +92,7 @@ def start_counting(dataset: CountRequest, db: Session = Depends(get_db)):
 
 
 
-    return {"message": "Task started", "task_id": str(task.id)}
+    return {"message": "Task started"}
 
 # Просмотр списка всех изделий
 @app.get("/bread/")

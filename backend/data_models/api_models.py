@@ -21,6 +21,12 @@ class CountRequest(BaseModel):
     counting_line: Optional[str] = None
 
 
+class LabelingRequest(BaseModel):
+    camera_id: int
+    product_id: int
+    name: str
+
+
 class CountingResult(BaseModel):
     camera_id: int
     product_id: int
