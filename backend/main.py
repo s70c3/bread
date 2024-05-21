@@ -85,6 +85,15 @@ def create_dataset(dataset: CountRequest, db: Session = Depends(get_db)):
 
     return {"message": "Task started", "task_id": str(task.id)}
 
+@app.post("/count/")
+def start_counting(dataset: CountRequest, db: Session = Depends(get_db)):
+    stream = db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream
+    bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.bread_id).first().name
+
+
+
+    return {"message": "Task started", "task_id": str(task.id)}
+
 # Просмотр списка всех изделий
 @app.get("/bread/")
 def get_breads(db: Session = Depends(get_db)):

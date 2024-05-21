@@ -72,7 +72,7 @@ if canvas_result_square.json_data is not None and len(canvas_result_square.json_
     x2 = x1 + canvas_result_square.json_data["objects"][0]["width"]
     y1 = canvas_result_square.json_data["objects"][0]["top"]
     y2 = y1 + canvas_result_square.json_data["objects"][0]["height"]
-    st.write("Square data:", x1, y1, x2, y2)
+    st.write("Координаты ограничивающей области:", x1, y1, x2, y2)
 
 if canvas_result_line.json_data is not None and len(canvas_result_line.json_data["objects"])>0:
     # Extract the coordinates of the line
@@ -80,7 +80,7 @@ if canvas_result_line.json_data is not None and len(canvas_result_line.json_data
     lx2 = lx1 + canvas_result_line.json_data["objects"][0]["width"]
     ly1 = canvas_result_line.json_data["objects"][0]["top"]
     ly2 = ly1 + canvas_result_line.json_data["objects"][0]["height"]
-    st.write("Line data:", lx1, ly1, lx2, ly2)
+    st.write("Координаты линии подсчёта:", lx1, ly1, lx2, ly2)
 
 # Send the data to the backend
 if st.button('Submit'):
@@ -91,7 +91,7 @@ if st.button('Submit'):
         'bread_product_id': breads[bread_select]
     })
     if response.status_code == 200:
-        st.write('Data sent successfully')
+        st.write('Запрос на подсчёт отправлен успешно.')
     else:
-        st.write('Failed to send data')
+        st.write('Не удалось отправить данные.')
         st.write(response.text)
