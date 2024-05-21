@@ -22,6 +22,6 @@ if submit_button:
     response = requests.post('http://backend:8000/camera/',
                              json={"name": text_input, "rtsp_stream" : address, "description" : description})
     if response.status_code == 200:
-        st.write('Images uploaded successfully')
+        st.write('Изображения загружены успешно.')
     else:
-        st.write('Failed to upload images')
+        st.write('Не удалось загрузить изображения.')
