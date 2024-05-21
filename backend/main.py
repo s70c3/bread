@@ -10,6 +10,7 @@ from backend.data_models.api_models import *
 app = FastAPI()
 
 from backend.data_models.db_models import SessionLocal
+from backend.autolabel.worker import label_data
 
 
 # Функция для получения сессии базы данных
@@ -75,9 +76,14 @@ def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
 # Создание нового изделия
 @app.post("/label/")
 def create_dataset(dataset: CountRequest, db: Session = Depends(get_db)):
-    stream = db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().scalar()
-    bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.bread_id).first().scalar()
+    stream = db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream
+    bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.bread_id).first().name
     print(bread, stream)
+
+    # Start the label_data task in Celery
+    task = label_data.delay(stream, dataset.camera_id, dataset.bread_id, bread)
+
+    return {"message": "Task started", "task_id": str(task.id)}
 
 # Просмотр списка всех изделий
 @app.get("/bread/")
