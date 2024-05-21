@@ -12,14 +12,10 @@ if data:
     # Display the data in a list
     for i, bread in enumerate(data):
         st.write(f"{i}. {bread['name']}")
-        for photo in bread['photos']:
-            try:
-                img_data = base64.b64decode(photo)
-                img = Image.open(BytesIO(img_data))
-                st.image(img)
-            except Exception as e:
-                st.write(e)
-                st.write('Failed to display image')
+        img_data = base64.b64decode(bread['photos'])
+        img = Image.open(BytesIO(img_data))
+        st.image(img)
+
 
     # Ask the user to select a product to edit or delete
     product_to_edit = st.number_input('Enter the index of the product to edit or delete', min_value=0, max_value=len(data)-1)
