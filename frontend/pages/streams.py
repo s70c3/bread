@@ -11,7 +11,7 @@ import pages.utils.settings as settings
 
 # Setting page layout
 st.set_page_config(
-    page_title="Object Detection using YOLOv8",
+    page_title="Детекция хлебобулочных изделить в реальном времени",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -24,7 +24,7 @@ st.title("Подсчёт объектов в реальном времени")
 st.sidebar.header("Подсчёт в режиме онлайн")
 
 confidence = float(st.sidebar.slider(
-    "Select Model Confidence", 25, 100, 40)) / 100
+    "Выберите уверенность модели", 25, 100, 40)) / 100
 
 model_path = Path(settings.DETECTION_MODEL)
 
@@ -32,10 +32,9 @@ model_path = Path(settings.DETECTION_MODEL)
 try:
     model = helper.load_model(model_path)
 except Exception as ex:
-    st.error(f"Unable to load model. Check the specified path: {model_path}")
+    st.error(f"Не удалось загрузить модель: {model_path}")
     st.error(ex)
 
-st.sidebar.header("Image/Video Config")
 
 import requests
 
@@ -46,7 +45,7 @@ if response.status_code == 200:
     sources = {camera['name']: camera['rtsp_stream'] for camera in sources['cameras']}
     print(sources)
 else:
-    print('Failed to get sources')
+    print('Не удалось получить список камер. Проверьте доступ к серверу.')
 
 source_radio = st.sidebar.radio(
     "Выберите камеру", sources.keys())

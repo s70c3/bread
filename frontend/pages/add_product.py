@@ -20,7 +20,7 @@ with st.form(key="bread_form"):
         # st.image(bytes_data)
         images_base64.append(base64_str)
 
-    submit_button = st.form_submit_button(label='Submit')
+    submit_button = st.form_submit_button(label='Подтвердить')
 
 if submit_button:
     print(images_base64)
@@ -28,8 +28,8 @@ if submit_button:
     response = requests.post('http://backend:8000/bread/',
                              json={"name": text_input, "photos": images_base64})
     if response.status_code == 200:
-        st.write('Images uploaded successfully')
+        st.write('Изображения успешно загружены')
     else:
-        st.write('Failed to upload images')
+        st.write('Не удалось загрузить изображения')
         print(response.status_code)
         print(response.text)
