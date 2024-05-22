@@ -135,6 +135,38 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
     # Запуск чтения видео и отправки кадров на обработку
 
     return {"message": "Counting started for all streams"}
+
+
+@app.get("/counting_request/{request_id}")
+def get_counting_request(request_id: int, db: Session = Depends(get_db)):
+    counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.id == request_id).first()
+    if counting_request is None:
+        raise HTTPException(status_code=404, detail="Counting request not found")
+
+    camera = db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first()
+    product = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == counting_request.product_id).first()
+
+    return {
+        'camera_name': camera.name,
+        'camera_rtsp': camera.rtsp_stream,
+        'product_id': product.product_id,
+        'product_name': product.name
+    }
+@app.get("/counting_requests/")
+def get_all_counting_requests(db: Session = Depends(get_db)):
+    counting_requests = db.query(models.CountingRequest).all()
+    result = []
+    for counting_request in counting_requests:
+        camera = db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first()
+        product = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == counting_request.product_id).first()
+        result.append({
+            'camera_id' : counting_request.camera_id,
+            'camera_name': camera.name,
+            'camera_rtsp': camera.rtsp_stream,
+            'product_id': product.product_id,
+            'product_name': product.name
+        })
+    return result
 # Просмотр списка всех изделий
 @app.get("/bread/")
 def get_breads(db: Session = Depends(get_db)):

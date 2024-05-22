@@ -8,48 +8,43 @@ import streamlit as st
 # Local Modules
 import pages.utils.helper as helper
 import pages.utils.settings as settings
+from ultralytics import YOLO
 
 # Setting page layout
 st.set_page_config(
-    page_title="Детекция хлебобулочных изделить в реальном времени",
+    page_title="Детекция хлебобулочных изделий в реальном времени",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Main page heading
-st.title("Подсчёт объектов в реальном времени")
-
-# Sidebar
-st.sidebar.header("Подсчёт в режиме онлайн")
-
-confidence = float(st.sidebar.slider(
-    "Выберите уверенность модели", 25, 100, 40)) / 100
-
-model_path = Path(settings.DETECTION_MODEL)
-
-# Load Pre-trained ML Model
-try:
-    model = helper.load_model(model_path)
-except Exception as ex:
-    st.error(f"Не удалось загрузить модель: {model_path}")
-    st.error(ex)
-
+st.title("Детекция хлебобулочных изделий в реальном времени")
 
 import requests
+import streamlit as st
 
-response = requests.get('http://backend:8000/camera')
-
+# Fetch the list of counting requests
+response = requests.get('http://backend:8000/counting_requests/')
 if response.status_code == 200:
-    sources = response.json()
-    sources = {camera['name']: camera['rtsp_stream'] for camera in sources['cameras']}
-    print(sources)
+    counting_requests = response.json()
 else:
-    print('Не удалось получить список камер. Проверьте доступ к серверу.')
+    st.error('Не получается получить список запросов. Проверьте доступ к серверу.')
 
-source_radio = st.sidebar.radio(
-    "Выберите камеру", sources.keys())
+# Create a list of pairs (camera, product)
+pairs = [(request['camera_name'], request['product_name']) for request in counting_requests]
 
-stream_address= str(sources.get(source_radio))
+# Let the user select a pair
+selected_pair = st.selectbox('Выберите пару (камера, продукт)', pairs)
 
-helper.play_rtsp_stream(confidence, model, stream_address)
+# Find the selected counting request
+selected_request = next((request for request in counting_requests if request['camera_name'] == selected_pair[0] and request['product_name'] == selected_pair[1]), None)
+
+if selected_request is not None:
+    # Get the RTSP and product name from the selected counting request
+    rtsp = selected_request['camera_rtsp']
+    product_name = selected_request['product_name']
+else:
+    st.error('Не удалось найти выбранную пару. Проверьте данные.')
+model = YOLO('/model/yolo.pt')
+helper.play_rtsp_stream(model, rtsp)

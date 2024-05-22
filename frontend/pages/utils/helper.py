@@ -26,7 +26,7 @@ def display_tracker_options():
     return is_display_tracker, None
 
 
-def _display_detected_frames(conf, model, st_frame, frame,  tracker=None, line_counter=None, line_annotator=None, box_annotator=None):
+def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counter=None, line_annotator=None, box_annotator=None):
     """
     Display the detected objects on a video frame using the YOLOv8 model.
 
@@ -69,7 +69,7 @@ def _display_detected_frames(conf, model, st_frame, frame,  tracker=None, line_c
 
 
 
-def play_rtsp_stream(conf, model, source_rtsp):
+def play_rtsp_stream(model, source_rtsp):
     """
     Plays an rtsp stream. Detects Objects in real-time using the YOLOv8 object detection model.
 
@@ -101,7 +101,7 @@ def play_rtsp_stream(conf, model, source_rtsp):
                 success, image = vid_cap.read()
 
                 if success:
-                    line_counter = _display_detected_frames(conf,
+                    line_counter = _display_detected_frames(
                                              model,
                                              st_frame,
                                              image,
@@ -112,38 +112,7 @@ def play_rtsp_stream(conf, model, source_rtsp):
                                              )
                 else:
                     vid_cap.release()
-                    # vid_cap = cv2.VideoCapture(source_rtsp)
-                    # time.sleep(0.1)
-                    # continue
                     break
         except Exception as e:
             vid_cap.release()
             st.sidebar.error("Error loading RTSP stream: " + str(e))
-
-
-
-# model = YOLO(model_path)
-# # Resize the image to a standard size
-# # image = cv2.resize(image, (720, int(720*(9/16))))
-#
-# # Display object tracking, if specified
-#
-# # Track objects in frames if available
-# results = model(frame)[0]
-# #
-
-#
-# line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
-# # create instance of BoxAnnotator and LineCounterAnnotator
-# line_annotator = sv.LineZoneAnnotator(thickness=4, text_thickness=4, text_scale=2)
-# box_annotator = sv.BoxAnnotator(color=sv.ColorPalette.default(), thickness=4, text_thickness=4, text_scale=2)
-#
-# # updating line counter
-# line_counter.trigger(detections=detections)
-# # format custom labels
-# # dict maping class_id to class_name
-#
-# frame = box_annotator.annotate(scene=frame, detections=detections)
-# line_annotator.annotate(frame=frame, line_counter=line_counter)
-#
-# # {"Хлеба": "rtsp://admin:Novichek2024$$@localhost:8080/ISAPI/Streaming/Channels/101"})

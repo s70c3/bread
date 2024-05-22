@@ -29,4 +29,4 @@ if response.status_code == 200:
     # Display the counting requests in a table
     st.table(counting_requests)
 else:
-    st.error("Failed to get counting requests")
+    st.error("Не удалось получить текущие подключения.")
