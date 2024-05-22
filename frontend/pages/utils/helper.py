@@ -65,6 +65,8 @@ def _display_detected_frames(conf, model, st_frame, frame,  tracker=None, line_c
                    use_column_width=True
                    )
 
+    return line_counter
+
 
 
 def play_rtsp_stream(conf, model, source_rtsp):
@@ -99,7 +101,7 @@ def play_rtsp_stream(conf, model, source_rtsp):
                 success, image = vid_cap.read()
 
                 if success:
-                    _display_detected_frames(conf,
+                    line_counter = _display_detected_frames(conf,
                                              model,
                                              st_frame,
                                              image,

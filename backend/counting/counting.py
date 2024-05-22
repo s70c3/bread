@@ -1,6 +1,7 @@
 # producer.py
+import ast
 import pickle
-from datetime import datetime
+import time
 
 import cv2
 from multiprocessing import Process, Queue
@@ -25,10 +26,16 @@ class Producer:
     def start(self):
         if self.is_running:
             return "Processes are already running"
+
         for i, video_source in enumerate(self.video_sources):
+            rtsp, camera_id, bread_id, selection_area, counting_line = video_source
+            counting_line = ast.literal_eval(counting_line)
+            LINE_START = sv.Point(counting_line[0], counting_line[1])
+            LINE_END = sv.Point(counting_line[2], counting_line[3])
+
             line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
             tracker = sv.ByteTrack()
-            process = Process(target=self._read_video, args=(video_source,
+            process = Process(target=self._read_video, args=(rtsp,
                                                              tracker, line_counter))
             self.processes.append(process)
             process.start()
@@ -39,8 +46,11 @@ class Producer:
 
     def add_stream(self, video_source, ):
         # create instance of BoxAnnotator and LineCounterAnnotator
-        LINE_START = sv.Point(0, 2000)
-        LINE_END = sv.Point(3000, 2000)
+        rtsp, camera_id, bread_id, selection_area, counting_line = video_source
+        counting_line = ast.literal_eval(counting_line)
+        LINE_START = sv.Point(counting_line[0], counting_line[1])
+        LINE_END = sv.Point(counting_line[2], counting_line[3])
+
         self.video_sources.append(video_source)
         line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
         tracker = sv.ByteTrack()
@@ -61,14 +71,14 @@ class Producer:
                     break
                 tracker, count = process_data(frame, tracker, line_counter, camera_id, product_id)
                 if frame_counter % 20 == 0:
-                    response = requests.post("http://localhost:8000/counting_result/", json=data)
+
                     data = {
                         "camera_id": camera_id,
                         "product_id": product_id,
                         "count": count,
-                        "timestamp" : datetime.now()
+                        "timestamp" : time.time()
                     }
-
+                    response = requests.post("http://localhost:8000/counting_result/", json=data)
                     if response.status_code == 200:
                         print("Data sent successfully")
                     else:

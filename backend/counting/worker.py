@@ -5,14 +5,12 @@ import requests
 import pickle
 import supervision as sv
 
-def process_data(frame, tracker, line_counter):
+def process_data(frame, tracker, line_counter, camera_id, product_id):
     # for image in images:
     model = YOLO('/model/yolo.pt')
-    image = pickle.loads(frame)
-    tracker = pickle.loads(tracker)
-    line_counter = pickle.loads(line_counter)
-    results = model(image)[0]
+    results = model(frame)[0]
     detections = sv.Detections.from_ultralytics(results)
+    detections = detections[detections.class_id == product_id]
     detections = tracker.update_with_detections(detections)
     line_counter.trigger(detections=detections)
 
