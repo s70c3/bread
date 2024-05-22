@@ -6,8 +6,11 @@ from sqlalchemy.exc import IntegrityError
 
 import backend.data_models.db_models as models
 from backend.data_models.api_models import *
+from backend.counting.counting import Producer
+
 
 app = FastAPI()
+producer = Producer()
 
 from backend.data_models.db_models import SessionLocal
 from backend.autolabel.worker import label_data
@@ -94,19 +97,16 @@ def create_counting_result(counting_result: CountingResult, db: Session = Depend
     db.refresh(db_counting_result)
     return db_counting_result
 
-from backend.counting.counting import Producer
 
+@app.get("/count/")
+def start_counting(db: Session = Depends(get_db)):
 
-@app.post("/count/")
-def start_counting(counting_request: CountingRequest, db: Session = Depends(get_db)):
-    new_request = models.CountingRequest(**counting_request.dict())
-    db.add(new_request)
-    db.commit()
-    # Get all streams from the CountRequest table
-    datasets = db.query(models.CountingRequest).all()
-
-    # Get the rtsp_stream for each dataset
-    streams = [db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream for dataset in datasets]
+    streams = [(db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
+                dataset.camera_id,
+                dataset.product_id,
+                dataset.selection_area,
+                dataset.counting_line)
+               for dataset in db.query(models.CountingRequest).all()]
 
     # Create an instance of the Counting class with all streams
 
@@ -115,6 +115,24 @@ def start_counting(counting_request: CountingRequest, db: Session = Depends(get_
 
     # Запуск чтения видео и отправки кадров на обработку
     producer.start()
+
+    return streams
+# Просмотр списка всех изделий
+
+@app.post("/count/")
+def start_new_counting(counting_request: CountingRequest, db: Session = Depends(get_db)):
+    new_request = models.CountingRequest(**counting_request.dict())
+    db.add(new_request)
+    db.commit()
+    # Get all streams from the CountRequest table
+
+    # Создание экземпляра класса Producer
+    producer.add_stream((db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
+                         counting_request.camera_id,
+                         counting_request.product_id,
+                         counting_request.selection_area,
+                         counting_request.counting_line))
+    # Запуск чтения видео и отправки кадров на обработку
 
     return {"message": "Counting started for all streams"}
 # Просмотр списка всех изделий

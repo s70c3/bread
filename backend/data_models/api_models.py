@@ -30,6 +30,5 @@ class LabelingRequest(BaseModel):
 class CountingResult(BaseModel):
     camera_id: int
     product_id: int
-    start_period: datetime
-    end_period: datetime
+    timestamp: datetime
     count: int

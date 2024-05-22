@@ -59,8 +59,7 @@ class CountingResult(Base):
     result_id = Column(Integer, primary_key=True)
     camera_id = Column(Integer, ForeignKey('cameras.camera_id'), nullable=False)
     product_id = Column(Integer, ForeignKey('bread_products.product_id'), nullable=False)
-    start_period = Column(DateTime, nullable=False)
-    end_period = Column(DateTime, nullable=False)
+    timestamp = Column(DateTime, nullable=False)
     count = Column(Integer, nullable=False)
 
     camera = relationship("Camera", back_populates="counting_results")
