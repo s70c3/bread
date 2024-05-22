@@ -85,15 +85,38 @@ def create_dataset(dataset: LabelingRequest, db: Session = Depends(get_db)):
 
     return {"message": "Task started", "task_id": str(task.id)}
 
+
+@app.post("/counting_result/")
+def create_counting_result(counting_result: CountingResult, db: Session = Depends(get_db)):
+    db_counting_result = models.CountingResult(**counting_result.dict())
+    db.add(db_counting_result)
+    db.commit()
+    db.refresh(db_counting_result)
+    return db_counting_result
+
+from backend.counting.counting import Producer
+
+
 @app.post("/count/")
-def start_counting(dataset: CountRequest, db: Session = Depends(get_db)):
-    stream = db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream
-    bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.bread_id).first().name
+def start_counting(counting_request: CountingRequest, db: Session = Depends(get_db)):
+    new_request = models.CountingRequest(**counting_request.dict())
+    db.add(new_request)
+    db.commit()
+    # Get all streams from the CountRequest table
+    datasets = db.query(models.CountingRequest).all()
 
+    # Get the rtsp_stream for each dataset
+    streams = [db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream for dataset in datasets]
 
+    # Create an instance of the Counting class with all streams
 
-    return {"message": "Task started"}
+    # Создание экземпляра класса Producer
+    producer = Producer(streams)
 
+    # Запуск чтения видео и отправки кадров на обработку
+    producer.start()
+
+    return {"message": "Counting started for all streams"}
 # Просмотр списка всех изделий
 @app.get("/bread/")
 def get_breads(db: Session = Depends(get_db)):

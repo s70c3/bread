@@ -10,7 +10,7 @@ def create_images(video_stream, conveyor, dist):
     cap = cv2.VideoCapture(video_stream)
 
     FRAME_STRIDE = 30
-    image_name_pattern = conveyor + "-{:05d}.png"
+    image_name_pattern = str(conveyor) + "-{:05d}.png"
     with sv.ImageSink(target_dir_path=dist, image_name_pattern=image_name_pattern) as sink:
         for image in sv.get_video_frames_generator(source_path=str(video_stream), stride=FRAME_STRIDE):
             image = cv2.resize(image, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_LINEAR)
@@ -31,7 +31,7 @@ def label(source, dist,  name="bread",  is_packed = False):
         })
 
     base_model = GroundingDINO(ontology=ontology)
-    DATASET_DIR_PATH = dist
+    DATASET_DIR_PATH = str(dist)
 
     dataset = base_model.label(
         input_folder= source,

@@ -22,8 +22,8 @@ else:
     print('Не получается получить список хлебобулочных изделий. Проверьте доступ к серверу.')
 
 # Let the user select a camera and a bread product
-source_radio = st.sidebar.radio("Выберите камеру", sources.keys())
-bread_select = st.sidebar.selectbox('Выберите хлебобулочное изделие', list(breads.keys()))
+source_radio = st.radio("Выберите камеру", sources.keys())
+bread_select = st.selectbox('Выберите хлебобулочное изделие', list(breads.keys()))
 
 stream_address= str(sources.get(source_radio))
 

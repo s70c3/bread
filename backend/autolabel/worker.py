@@ -8,11 +8,9 @@ celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:
 celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
 
 
-@celery.task(name="label")
+@celery.task(name="label", queue="queue1")
 def label_data(video_stream, conveyor, dist, name):
     source = create_images(video_stream, conveyor, dist)
     dataset = label(source, dist)
     train_yolo(dataset, name)
-
-    # time.sleep(int(task_type) * 10)
     return True

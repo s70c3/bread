@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import PickleType
+
 from os import environ
 
 Base = declarative_base()
@@ -47,7 +49,6 @@ class CountingRequest(Base):
     camera_id = Column(Integer, ForeignKey('cameras.camera_id'), primary_key=True)
     selection_area = Column(String)
     counting_line = Column(String)
-
     camera = relationship("Camera", back_populates="counting_requests")
     product = relationship("BreadProduct", back_populates="counting_requests")
 

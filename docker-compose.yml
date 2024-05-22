@@ -8,6 +8,7 @@ services:
       - redis
     volumes:
       - ./:/code:ro
+      - ./model:/model:ro
     environment:
       - DATABASE_URL=postgresql://postgres:bread@db:5432/bread
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -26,29 +27,46 @@ services:
       - ./frontend:/app
     restart: always
     container_name: frontend
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
 
   db:
     image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    expose:
-      - 5432
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=bread
       - POSTGRES_DB=bread
 
-  worker:
+  worker1:
     build: backend
-    command: celery -A autolabel.worker.celery worker --loglevel=info
+    command: celery -A autolabel.worker.celery worker --loglevel=info --hostname=worker1@%h -Q queue1
     volumes:
       - ./backend:/usr/src/app
+      - ./model:/model:ro
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - backend
       - redis
+
+  worker2:
+    build: backend
+    command: celery -A counting.worker.celery worker --loglevel=info --hostname=worker2@%h -Q queue2
+    volumes:
+      - ./backend:/usr/src/app
+      - ./model:/model:ro
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - backend
+      - redis
+
   redis:
     image: redis:7
 
@@ -63,6 +81,8 @@ services:
     depends_on:
       - backend
       - redis
-      - worker
+      - worker1
+      - worker2
+
 volumes:
-      postgres_data:
+  postgres_data:

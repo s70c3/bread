@@ -3,6 +3,7 @@ import streamlit as st
 # Initialize Celery
 import os
 broker_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
+st.write(broker_url)
 app = Celery('autolabel', broker=broker_url)
 
 

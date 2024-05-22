@@ -14,7 +14,7 @@ class BreadProduct(BaseModel):
     name: str
     photos: Optional[List[str]] = None
 
-class CountRequest(BaseModel):
+class CountingRequest(BaseModel):
     camera_id: int
     product_id: int
     selection_area: Optional[str] = None

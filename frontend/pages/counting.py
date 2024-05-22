@@ -22,8 +22,8 @@ else:
     print('Не получается получить список хлебобулочных изделий. Проверьте доступ к серверу.')
 
 # Let the user select a camera and a bread product
-source_radio = st.sidebar.radio("Выберите камеру", sources.keys())
-bread_select = st.sidebar.selectbox('Выберите хлебобулочное изделие', list(breads.keys()))
+source_radio = st.radio("Выберите камеру", sources.keys())
+bread_select = st.selectbox('Выберите хлебобулочное изделие', list(breads.keys()))
 
 stream_address= str(sources.get(source_radio))
 
@@ -53,7 +53,7 @@ canvas_result_square = st_canvas(
 )
 
 # Create a drawable canvas with the frame as the background for drawing the line
-st.markdown("## Draw a line")
+st.markdown("## Нарисуйте линию подсчёта")
 canvas_result_line = st_canvas(
     fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
     stroke_width=2,
@@ -65,6 +65,8 @@ canvas_result_line = st_canvas(
     drawing_mode='line',
     key="canvas_line",
 )
+
+
 
 # The data in the canvas (lines, shapes, etc) is in the `canvas_result.json_data` attribute
 if canvas_result_square.json_data is not None and len(canvas_result_square.json_data["objects"])>0:
@@ -85,11 +87,11 @@ if canvas_result_line.json_data is not None and len(canvas_result_line.json_data
 
 # Send the data to the backend
 if st.button('Подтвердить'):
-    response = requests.post('http://backend:8000/label/', json={
-        'square': [x1, y1, x2, y2],
-        'line': [lx1, ly1, lx2, ly2],
+    response = requests.post('http://backend:8000/count/', json={
+        'selection_area': str([x1, y1, x2, y2]),
+        'counting_line': str([lx1, ly1, lx2, ly2]),
         'camera_id': camera_ids[source_radio],
-        'bread_product_id': breads[bread_select]
+        'product_id': breads[bread_select]
     })
     if response.status_code == 200:
         st.write('Запрос на подсчёт отправлен успешно.')
