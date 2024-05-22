@@ -55,7 +55,7 @@ class Producer:
         line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
         tracker = sv.ByteTrack()
         process = Process(target=self._read_video, args=(video_source,
-                                                         tracker, line_counter))
+                                                         tracker, line_counter, camera_id, bread_id))
         self.processes.append(process)
         process.start()
 
