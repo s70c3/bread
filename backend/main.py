@@ -6,11 +6,12 @@ from sqlalchemy.exc import IntegrityError
 
 import backend.data_models.db_models as models
 from backend.data_models.api_models import *
-from backend.counting.counting import Producer
+import backend.counting.counting as  p
 
 
 app = FastAPI()
-producer = Producer()
+
+producer = p.Producer()
 
 from backend.data_models.db_models import SessionLocal
 from backend.autolabel.worker import label_data

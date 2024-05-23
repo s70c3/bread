@@ -1,8 +1,5 @@
-import os
-from datetime import datetime
+
 from ultralytics import YOLO
-import requests
-import pickle
 import supervision as sv
 
 def process_data(frame, tracker, line_counter, camera_id, product_id):
