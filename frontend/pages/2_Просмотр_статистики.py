@@ -3,7 +3,7 @@ import requests
 from datetime import date, datetime
 
 # Fetch the data
-response = requests.get('http://backend:8000/bread/')
+response = requests.get('http://backend:8543/bread/')
 data = response.json()['breads']
 
 # Display the data in a list
@@ -24,7 +24,7 @@ end_datetime = datetime.combine(end_date, end_time)
 
 # Send a GET request with the selected product ID and date range
 if st.button('Просмотр'):
-    response = requests.get(f'http://backend:8000/bread/count/{product_list[product_to_view]}?start_datetime={start_datetime.isoformat()}&end_datetime={end_datetime.isoformat()}')
+    response = requests.get(f'http://backend:8543/bread/count/{product_list[product_to_view]}?start_datetime={start_datetime.isoformat()}&end_datetime={end_datetime.isoformat()}')
     if response.status_code == 200:
         st.write(f'Количество продукта {product_to_view} с {start_datetime} по {end_datetime}: {response.json()}')
     else:

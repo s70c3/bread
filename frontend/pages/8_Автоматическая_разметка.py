@@ -42,7 +42,7 @@ st.image(frame)
 
 # Send the data to the backend
 if st.button('Подтвердить'):
-    response = requests.post('http://backend:8000/label/', json={
+    response = requests.post('http://backend:8543/label/', json={
         'camera_id': camera_ids[source_radio],
         'product_id': breads[bread_select],
         'name' : bread_select

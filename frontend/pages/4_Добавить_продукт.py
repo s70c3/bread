@@ -25,7 +25,7 @@ with st.form(key="bread_form"):
 if submit_button:
     print(images_base64)
     # Send the images to FastAPI
-    response = requests.post('http://backend:8000/bread/',
+    response = requests.post('http://backend:8543/bread/',
                              json={"name": text_input, "photos": images_base64})
     if response.status_code == 200:
         st.write('Изображения успешно загружены')

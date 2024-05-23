@@ -18,7 +18,7 @@ import streamlit as st
 st.title("Запросы на подсчёт")
 
 # Make a GET request to the /count/ endpoint
-response = requests.get("http://backend:8000/count/")
+response = requests.get("http://backend:8543/count/")
 
 # Check if the request was successful
 if response.status_code == 200:

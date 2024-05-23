@@ -3,6 +3,13 @@ version: '3'
 services:
   backend:
     build: backend
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     depends_on:
       - db
       - redis
@@ -15,14 +22,21 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - NVIDIA_VISIBLE_DEVICES=all
     ports:
-      - "8000:8000"
+      - "8543:8543"
     container_name: backend
 
 
   frontend:
     build: frontend
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     ports:
-      - 8501:8501
+      - 9033:8501
     depends_on:
       - backend
     volumes:
@@ -48,6 +62,13 @@ services:
 
   worker1:
     build: backend
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     command: celery -A autolabel.worker.celery worker --loglevel=info --hostname=worker1@%h -Q queue1
     volumes:
       - ./backend:/usr/src/app

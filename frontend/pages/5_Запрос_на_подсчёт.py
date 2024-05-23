@@ -5,7 +5,7 @@ from PIL import Image
 import requests
 
 # Fetch the list of cameras
-response = requests.get('http://backend:8000/camera')
+response = requests.get('http://backend:8543/camera')
 if response.status_code == 200:
     sources_raw = response.json()
     sources = {camera['name']: camera['rtsp_stream'] for camera in sources_raw['cameras']}
@@ -14,7 +14,7 @@ else:
     print('Не получается получить список камер. Проверьте доступ к серверу.')
 
 # Fetch the list of bread products
-response = requests.get('http://backend:8000/bread/')
+response = requests.get('http://backend:8543/bread/')
 if response.status_code == 200:
     breads = response.json()
     breads = {bread['name']: bread['product_id'] for bread in breads['breads']}
@@ -87,7 +87,7 @@ if canvas_result_line.json_data is not None and len(canvas_result_line.json_data
 
 # Send the data to the backend
 if st.button('Подтвердить'):
-    response = requests.post('http://backend:8000/count/', json={
+    response = requests.post('http://backend:8543/count/', json={
         'selection_area': str([x1, y1, x2, y2]),
         'counting_line': str([lx1, ly1, lx2, ly2]),
         'camera_id': camera_ids[source_radio],

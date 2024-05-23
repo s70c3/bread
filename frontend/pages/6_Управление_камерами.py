@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # Fetch the data
-response = requests.get('http://backend:8000/camera/')
+response = requests.get('http://backend:8543/camera/')
 data = response.json()['cameras']
 
 # Convert the data to a pandas DataFrame
@@ -28,7 +28,7 @@ if action == 'Изменить':
 
     if submit_button:
         # Send a PUT request with the new data
-        response = requests.put(f'http://backend:8000/camera/{df.loc[row_to_edit, "camera_id"]}', json=new_data)
+        response = requests.put(f'http://backend:8543/camera/{df.loc[row_to_edit, "camera_id"]}', json=new_data)
         if response.status_code == 200:
             st.write('Данные успешно обновлены')
         else:
@@ -40,7 +40,7 @@ elif action == 'Удалить':
     # Confirm the deletion
     if st.button('Подтвердить удаление'):
         # Send a DELETE request
-        response = requests.delete(f'http://backend:8000/camera/{df.loc[row_to_edit, "camera_id"]}')
+        response = requests.delete(f'http://backend:8543/camera/{df.loc[row_to_edit, "camera_id"]}')
         if response.status_code == 200:
             st.write('Дата успешно обновлены')
         else:

@@ -5,7 +5,7 @@ from PIL import Image
 from io import BytesIO
 
 # Fetch the data
-response = requests.get('http://backend:8000/bread/')
+response = requests.get('http://backend:8543/bread/')
 data = response.json()['breads']
 
 if data:
@@ -33,7 +33,7 @@ if data:
 
         if submit_button:
             # Send a PUT request with the new data
-            response = requests.put(f'http://backend:8000/bread/{data[product_to_edit]["product_id"]}', json={"name": new_name, "photos": new_photos_base64})
+            response = requests.put(f'http://backend:8543/bread/{data[product_to_edit]["product_id"]}', json={"name": new_name, "photos": new_photos_base64})
             if response.status_code == 200:
                 st.write('Данные успешно обновлены.')
             else:
@@ -44,7 +44,7 @@ if data:
         # Confirm the deletion
         if st.button('Подтвердите удаление'):
             # Send a DELETE request
-            response = requests.delete(f'http://backend:8000/bread/{data[product_to_edit]["product_id"]}')
+            response = requests.delete(f'http://backend:8543/bread/{data[product_to_edit]["product_id"]}')
             if response.status_code == 200:
                 st.write('Продукт успешно удален')
             else:

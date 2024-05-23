@@ -19,7 +19,7 @@ with st.form(key="bread_form"):
 
 if submit_button:
     # Send the images to FastAPI
-    response = requests.post('http://backend:8000/camera/',
+    response = requests.post('http://backend:8543/camera/',
                              json={"name": text_input, "rtsp_stream" : address, "description" : description})
     if response.status_code == 200:
         st.write('Изображения загружены успешно.')
