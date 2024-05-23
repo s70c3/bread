@@ -4,7 +4,7 @@ import pickle
 import time
 
 import cv2
-from multiprocessing import Process, Queue
+
 import multiprocessing as mp
 import requests
 from ultralytics import YOLO
@@ -39,7 +39,7 @@ class Producer:
 
             line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
             tracker = sv.ByteTrack()
-            process = Process(target=self._read_video, args=(rtsp,
+            process = mp.Process(target=self._read_video, args=(rtsp,
                                                              tracker, line_counter))
             self.processes.append(process)
             process.start()
@@ -60,7 +60,7 @@ class Producer:
         self.video_sources.append(video_source)
         line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
         tracker = sv.ByteTrack()
-        process = Process(target=self._read_video, args=(video_source,
+        process = mp.Process(target=self._read_video, args=(video_source,
                                                          tracker, line_counter, camera_id, bread_id))
         self.processes.append(process)
         process.start()
