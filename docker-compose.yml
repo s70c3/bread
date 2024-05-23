@@ -16,7 +16,13 @@ services:
     ports:
       - "8000:8000"
     container_name: backend
-    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
 
 
   frontend:
@@ -32,7 +38,13 @@ services:
     container_name: frontend
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
-    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
 
   db:
     image: postgres:15-alpine
@@ -58,7 +70,13 @@ services:
     depends_on:
       - backend
       - redis
-  runtime: nvidia
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [ gpu ]
 
 
   redis:
