@@ -15,6 +15,7 @@ if data:
     # Display the data in a list
     for i, bread in enumerate(data):
         st.write(f"{i}. {bread['name']}")
+        st.write(f"ID: {bread['product_id']}")
         img_data = base64.b64decode(bread['photos'])
         img = Image.open(BytesIO(img_data))
         st.image(img)
