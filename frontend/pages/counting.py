@@ -79,7 +79,7 @@ if canvas_result_square.json_data is not None and len(canvas_result_square.json_
 
 if canvas_result_line.json_data is not None and len(canvas_result_line.json_data["objects"])>0:
     # Extract the coordinates of the line
-    lx1 = canvas_result_line.json_data["objects"][0]["left"]
+    lx1 = canvas_result_line.json_data["objects"][0]["left"] - canvas_result_line.json_data["objects"][0]["width"]//2
     lx2 = lx1 + canvas_result_line.json_data["objects"][0]["width"]
     ly1 = canvas_result_line.json_data["objects"][0]["top"]
     ly2 = ly1 + canvas_result_line.json_data["objects"][0]["height"]
