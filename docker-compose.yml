@@ -13,16 +13,10 @@ services:
       - DATABASE_URL=postgresql://postgres:bread@db:5432/bread
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - NVIDIA_VISIBLE_DEVICES=all
     ports:
       - "8000:8000"
     container_name: backend
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
 
 
   frontend:
@@ -38,13 +32,8 @@ services:
     container_name: frontend
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
+      - NVIDIA_VISIBLE_DEVICES=all
+
 
   db:
     image: postgres:15-alpine
@@ -67,16 +56,11 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - NVIDIA_VISIBLE_DEVICES=all
     depends_on:
       - backend
       - redis
-  deploy:
-    resources:
-      reservations:
-        devices:
-          - driver: nvidia
-            count: 1
-            capabilities: [ gpu ]
+
 
 
   redis:
