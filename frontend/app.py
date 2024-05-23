@@ -7,7 +7,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("# Главная страница")
 # Python In-built packages
 import requests
 
