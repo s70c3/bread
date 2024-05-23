@@ -12,6 +12,7 @@ from ultralytics import YOLO
 from .worker import process_data
 import supervision as sv
 
+print(mp.get_start_method())
 mp.set_start_method('spawn')
 class Producer:
     _instance = None
