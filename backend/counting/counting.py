@@ -12,8 +12,6 @@ from ultralytics import YOLO
 from .worker import process_data
 import supervision as sv
 
-print(mp.get_start_method())
-mp.set_start_method('spawn')
 class Producer:
     _instance = None
     def __new__(cls, *args, **kwargs):
@@ -21,6 +19,7 @@ class Producer:
             cls._instance = super(Producer, cls).__new__(cls)
         return cls._instance
     def __init__(self, video_sources=None):
+        mp.set_start_method('forkserver', force=True)
         if video_sources is None:
             video_sources = []
         self.video_sources = video_sources
