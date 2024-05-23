@@ -25,7 +25,7 @@ end_datetime = datetime.combine(end_date, end_time)
 # Send a GET request with the selected product ID and date range
 if st.button('Просмотр'):
     response = requests.get(
-        f'http://backend:8543/bread/count/{product_list[product_to_view]}/period/?start_datetime={start_datetime.isoformat()}&end_datetime={end_datetime.isoformat()}')
+        f'http://backend:8543/bread/count/{product_list[product_to_view]}/period/?start_datetime={str(start_datetime.isoformat())}&end_datetime={str(end_datetime.isoformat())}')
     if response.status_code == 200:
         st.write(f'Количество продукта {product_to_view} с {start_datetime} по {end_datetime}: {response.json()}')
     else:

@@ -200,7 +200,10 @@ def count_product(product_id: int, db: Session = Depends(get_db)):
 
 # Просмотр количества изделий за период времени
 @app.get("/bread/count/{product_id}/period/")
-def count_product_period(product_id: int, start_date: datetime, end_date: datetime, db: Session = Depends(get_db)):
+def count_product_period(product_id: int, start_date: str, end_date: str, db: Session = Depends(get_db)):
+    start_date = datetime.fromisoformat(start_date)
+    end_date = datetime.fromisoformat(end_date)
+
     count_result = db.query(func.sum(models.CountingResult.count)). \
         filter(models.CountingResult.product_id == product_id). \
         filter(models.CountingResult.start_period.between(start_date, end_date)).scalar()
