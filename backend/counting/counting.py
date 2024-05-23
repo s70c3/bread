@@ -5,11 +5,14 @@ import time
 
 import cv2
 from multiprocessing import Process, Queue
+import multiprocessing as mp
 import requests
 from ultralytics import YOLO
 
 from .worker import process_data
 import supervision as sv
+
+mp.set_start_method('spawn')
 class Producer:
     _instance = None
     def __new__(cls, *args, **kwargs):
