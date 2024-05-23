@@ -15,8 +15,8 @@ start_date = st.date_input('Начало периода', value=date.today())
 end_date = st.date_input('Конец периода', value=date.today())
 
 # Ask the user to select a time range
-start_time = st.time_input('Start time', value=datetime.now().time())
-end_time = st.time_input('End time', value=datetime.now().time())
+start_time = st.time_input('Время')
+end_time = st.time_input('Время')
 
 # Combine date and time into datetime objects
 start_datetime = datetime.combine(start_date, start_time)
