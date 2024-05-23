@@ -5,6 +5,7 @@ import pandas as pd
 # Fetch the data
 response = requests.get('http://backend:8543/camera/')
 data = response.json()['cameras']
+st.header("Управление камерами")
 
 if data:
     # Convert the data to a pandas DataFrame
@@ -52,8 +53,7 @@ else:
     st.write('Камер в базе нет.')
 
 
-st.markdown("Добавление новой камеры")
-st.sidebar.header("Добавление новой камеры")
+st.header("Добавление новой камеры")
 
 with st.form(key="bread_form"):
     text_input = st.text_input("Введите название камеры")

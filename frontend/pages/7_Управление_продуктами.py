@@ -8,6 +8,9 @@ from io import BytesIO
 response = requests.get('http://backend:8543/bread/')
 data = response.json()['breads']
 
+st.header("Управление продуктами")
+
+
 if data:
     # Display the data in a list
     for i, bread in enumerate(data):
@@ -55,7 +58,7 @@ else:
 
 
 
-st.markdown("Добавление нового продукта")
+st.header("Добавление нового продукта")
 
 
 with st.form(key="bread_form"):
