@@ -83,7 +83,7 @@ class Producer:
                         "count": count,
                         "timestamp" : time.time()
                     }
-                    response = requests.post("http://localhost:8000/counting_result/", json=data)
+                    response = requests.post("http://localhost:8543/counting_result/", json=data)
                     if response.status_code == 200:
                         print("Data sent successfully")
                     else:
