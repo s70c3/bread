@@ -51,12 +51,12 @@ if data:
                 st.write('Не удалось удалить продукт')
                 st.write(response.text)
 else:
-    st.write('Продукты в базе нет.')
+    st.write('Продуктов в базе нет.')
 
 
 
-st.markdown("Добавить нового продукта")
-st.sidebar.header("Добавление нового продукта")
+st.markdown("Добавление нового продукта")
+
 
 with st.form(key="bread_form"):
     text_input = st.text_input("Введите название продукта")
