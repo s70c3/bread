@@ -42,6 +42,8 @@ class Producer:
 
         for process in self.processes:
             process.join()
+
+        print("Количество процессов: ",len(self.processes))
         self.is_running = True
 
     def add_stream(self, video_source, ):

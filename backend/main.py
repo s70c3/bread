@@ -97,6 +97,10 @@ def create_counting_result(counting_result: CountingResult, db: Session = Depend
     db.refresh(db_counting_result)
     return db_counting_result
 
+@app.get("/stopcount/")
+def stop_counting(db: Session = Depends(get_db)):
+    producer.stop()
+
 
 @app.get("/count/")
 def start_counting(db: Session = Depends(get_db)):
@@ -164,7 +168,9 @@ def get_all_counting_requests(db: Session = Depends(get_db)):
             'camera_name': camera.name,
             'camera_rtsp': camera.rtsp_stream,
             'product_id': product.product_id,
-            'product_name': product.name
+            'product_name': product.name,
+            'selection_area': counting_request.selection_area,
+            'counting_line': counting_request.counting_line
         })
     return result
 # Просмотр списка всех изделий

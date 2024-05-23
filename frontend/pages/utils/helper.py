@@ -1,3 +1,4 @@
+import ast
 
 from ultralytics import YOLO
 import streamlit as st
@@ -17,15 +18,6 @@ def load_model(model_path):
     return model
 
 
-def display_tracker_options():
-    display_tracker = st.radio("Display Tracker", ('Yes', 'No'))
-    is_display_tracker = True if display_tracker == 'Yes' else False
-    if is_display_tracker:
-        tracker_type = st.radio("Tracker", ("bytetrack.yaml", "botsort.yaml"))
-        return is_display_tracker, tracker_type
-    return is_display_tracker, None
-
-
 def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counter=None, line_annotator=None, box_annotator=None):
     """
     Display the detected objects on a video frame using the YOLOv8 model.
@@ -43,7 +35,7 @@ def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counte
 
     # Resize the image to a standard size
 
-
+    frame = cv2.resize(frame, (720, int(720 * (9 / 16))))
     results = model(frame)[0]
 
     detections = sv.Detections.from_ultralytics(results)
@@ -56,7 +48,16 @@ def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counte
 
     frame = box_annotator.annotate(scene=frame, detections=detections)
     line_annotator.annotate(frame=frame, line_counter=line_counter)
-    frame = cv2.resize(frame, (720, int(720 * (9 / 16))))
+
+    label_annotator = sv.LabelAnnotator()
+    labels = [
+        f"{class_name} {confidence:.2f}"
+        for class_name, confidence
+        in zip(detections['class_name'], detections.confidence)
+    ]
+    frame = label_annotator.annotate(
+        scene=frame, detections=detections, labels=labels)
+
 
     # # Plot the detected objects on the video frame
     st_frame.image(frame,
@@ -65,11 +66,11 @@ def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counte
                    use_column_width=True
                    )
 
-    return line_counter
+    return tracker, line_counter
 
 
 
-def play_rtsp_stream(model, source_rtsp):
+def play_rtsp_stream(model, source_rtsp, counting_line):
     """
     Plays an rtsp stream. Detects Objects in real-time using the YOLOv8 object detection model.
 
@@ -83,36 +84,35 @@ def play_rtsp_stream(model, source_rtsp):
     Raises:
         None
     """
-    # source_rtsp = st.sidebar.text_input("rtsp stream url:")
-    # st.sidebar.caption('Example URL: rtsp://admin:12345@192.168.1.210:554/Streaming/Channels/101')
     tracker = sv.ByteTrack()
-    LINE_START = sv.Point(0, 2000)
-    LINE_END = sv.Point(3000, 2000)
+    counting_line = ast.literal_eval(counting_line)
+    LINE_START = sv.Point(counting_line[0], counting_line[1])
+    LINE_END = sv.Point(counting_line[2], counting_line[3])
+
     line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
     # create instance of BoxAnnotator and LineCounterAnnotator
-    line_annotator = sv.LineZoneAnnotator(thickness=4, text_thickness=4, text_scale=2)
-    box_annotator = sv.BoxAnnotator(color=sv.ColorPalette.default(), thickness=4, text_thickness=4, text_scale=2)
+    line_annotator = sv.LineZoneAnnotator(thickness=1, text_thickness=1, text_scale=1)
+    box_annotator = sv.BoxAnnotator(color=sv.ColorPalette.default(), thickness=1, text_thickness=1, text_scale=1)
 
-    if st.sidebar.button('Detect Objects'):
-        try:
-            vid_cap = cv2.VideoCapture(source_rtsp)
-            st_frame = st.empty()
-            while (vid_cap.isOpened()):
-                success, image = vid_cap.read()
+    try:
+        vid_cap = cv2.VideoCapture(source_rtsp)
+        st_frame = st.empty()
+        while (vid_cap.isOpened()):
+            success, image = vid_cap.read()
 
-                if success:
-                    line_counter = _display_detected_frames(
-                                             model,
-                                             st_frame,
-                                             image,
-                                             tracker,
-                                             line_counter,
-                                             line_annotator,
-                                             box_annotator
-                                             )
-                else:
-                    vid_cap.release()
-                    break
-        except Exception as e:
-            vid_cap.release()
-            st.sidebar.error("Error loading RTSP stream: " + str(e))
+            if success:
+                tracker, line_counter = _display_detected_frames(
+                                         model,
+                                         st_frame,
+                                         image,
+                                         tracker,
+                                         line_counter,
+                                         line_annotator,
+                                         box_annotator
+                                         )
+            else:
+                vid_cap.release()
+                break
+    except Exception as e:
+        vid_cap.release()
+        st.sidebar.error("Не получен видео поток: " + str(e))

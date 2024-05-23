@@ -44,7 +44,9 @@ if selected_request is not None:
     # Get the RTSP and product name from the selected counting request
     rtsp = selected_request['camera_rtsp']
     product_name = selected_request['product_name']
+    selection_area = selected_request['selection_area']
+    counting_line = selected_request['counting_line']
 else:
     st.error('Не удалось найти выбранную пару. Проверьте данные.')
 model = YOLO('/model/yolo.pt')
-helper.play_rtsp_stream(model, rtsp)
+helper.play_rtsp_stream(model, rtsp, counting_line)

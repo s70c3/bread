@@ -17,6 +17,7 @@ services:
       - "8000:8000"
     container_name: backend
 
+
   frontend:
     build: frontend
     ports:
@@ -48,19 +49,7 @@ services:
     volumes:
       - ./backend:/usr/src/app
       - ./model:/model:ro
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - backend
-      - redis
-
-  worker2:
-    build: backend
-    command: celery -A counting.worker.celery worker --loglevel=info --hostname=worker2@%h -Q queue2
-    volumes:
-      - ./backend:/usr/src/app
-      - ./model:/model:ro
+#      - /root/.cache:/root/.cache:ro
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -83,7 +72,6 @@ services:
       - backend
       - redis
       - worker1
-      - worker2
 
 volumes:
   postgres_data:
