@@ -21,6 +21,8 @@ st.set_page_config(
 # Main page heading
 st.title("Детекция хлебобулочных изделий в реальном времени")
 
+st.text("Для отображение подсчёта должен быть создан запрос на подсчёт.")
+
 import requests
 import streamlit as st
 

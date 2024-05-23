@@ -4,6 +4,10 @@ import cv2
 from PIL import Image
 import requests
 
+st.header("Запрос на подсчёт хлебобулочных изделий")
+
+st.text("Для запроса необходимо выбрать соответствующие камеру и изделие.")
+st.text("Добавьте камеру в на странице 'Управление камерами', а продукт на странице 'Управление продуктами'.")
 # Fetch the list of cameras
 response = requests.get('http://backend:8543/camera')
 if response.status_code == 200:
