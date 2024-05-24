@@ -82,7 +82,6 @@ def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
 def create_dataset(dataset: LabelingRequest, db: Session = Depends(get_db)):
     stream = db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream
     bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.product_id).first().name
-    print(bread, stream)
 
     # Start the label_data task in Celery
     task = label_data.delay(stream, dataset.camera_id, dataset.product_id, bread)
