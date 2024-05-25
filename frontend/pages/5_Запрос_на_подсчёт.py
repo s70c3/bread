@@ -22,36 +22,43 @@ if response.status_code == 200:
     st.table(counting_requests)
 
     # Allow the user to select a counting request to update or delete
-    request_id = st.selectbox('Выберите запрос для управления', [req['id'] for req in counting_requests])
+    request_id = st.selectbox('Выберите запрос для управления', [(req['camera_name'], req['product_name']) for req in counting_requests])
 
-    # If the user chooses to update a counting request
-    if st.button('Обновить'):
-        # Display a form with the current details of the counting request
-        request = next((req for req in counting_requests if req['id'] == request_id), None)
-        if request:
-            new_camera_id = st.text_input('Имя камеры', request['camera_name'])
-            new_product_id = st.text_input('Имя продукта', request['product_name'])
-            new_selection_area = st.text_input('Зона выбора', request['selection_area'])
-            new_counting_line = st.text_input('Линия подсчёта', request['counting_line'])
-            new_status = st.text_input('Статус', request['status'])
+    # Ask the user if they want to edit or delete the selected row
+    action = st.selectbox('Вы хотите изменить или удалить камеру?', options=['Изменить', 'Удалить'])
 
-            # Send the updated counting request to the backend
-            response = requests.put(f"http://backend:8543/count/{request_id}", json={
-                'camera_id': new_camera_id,
-                'product_id': new_product_id,
-                'selection_area': new_selection_area,
-                'counting_line': new_counting_line,
-                'status' : new_status
-            })
-            if response.status_code == 200:
-                st.success('Запрос на подсчёт успешно обновлен.')
-            else:
-                st.error('Не удалось обновить подсчёт.')
+    if action == 'Изменить':
+        with st.form(key='edit_form'):
+        # If the user chooses to update a counting request
+            # Display a form with the current details of the counting request
+            request = next((req for req in counting_requests if (req['camera_name'] == request_id[0] and req['product_name'] == request_id[1])), None)
+
+            if request:
+                    new_camera_id = st.text_input('Имя камеры', request['camera_name'])
+                    new_product_id = st.text_input('Имя продукта', request['product_name'])
+                    new_selection_area = st.text_input('Зона выбора', request['selection_area'])
+                    new_counting_line = st.text_input('Линия подсчёта', request['counting_line'])
+                    new_status = st.text_input('Статус', request['status'])
+                    submit_button = st.form_submit_button(label='Подтвердить')
+
+                    if submit_button:
+                    # Send the updated counting request to the backend
+                        response = requests.put(f"http://backend:8543/count/{request['id']}", json={
+                            'camera_id': new_camera_id,
+                            'product_id': new_product_id,
+                            'selection_area': new_selection_area,
+                            'counting_line': new_counting_line,
+                            'status' : new_status
+                        })
+                        if response.status_code == 200:
+                            st.success('Запрос на подсчёт успешно обновлен.')
+                        else:
+                            st.error('Не удалось обновить подсчёт.')
 
     # If the user chooses to delete a counting request
-    elif st.button('Удалить'):
+    if action =='Удалить':
         # Confirm the deletion before sending the delete request to the backend
-        if st.confirm('Вы точно хотите удалить?'):
+        if st.button('Подтвердить удаление'):
             response = requests.delete(f"http://backend:8543/count/{request_id}")
             if response.status_code == 200:
                 st.success("Запрос на подсчёт успешно удалён.")
@@ -89,73 +96,75 @@ source_radio = st.radio("Выберите камеру", sources.keys())
 bread_select = st.selectbox('Выберите хлебобулочное изделие', list(breads.keys()))
 
 stream_address= str(sources.get(source_radio))
+try:
+    # Fetch the RTSP stream
+    stream = cv2.VideoCapture(stream_address)
 
-# Fetch the RTSP stream
-stream = cv2.VideoCapture(stream_address)
+    # Capture a frame from the stream
+    ret, frame = stream.read()
 
-# Capture a frame from the stream
-ret, frame = stream.read()
-
-# Convert the frame to RGB
-frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-frame = cv2.resize(frame, (720, int(720*(9/16))))
+    # Convert the frame to RGB
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = cv2.resize(frame, (720, int(720*(9/16))))
 
 
-# Create a drawable canvas with the frame as the background for drawing the square
-st.markdown("## Выделите область, окружающую конвейер.")
-canvas_result_square = st_canvas(
-    fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
-    stroke_width=2,
-    stroke_color='#e00',
-    background_image=Image.fromarray(frame),
-    update_streamlit=True,
-    height=frame.shape[0],
-    width=frame.shape[1],
-    drawing_mode='rect',
-    key="canvas_square",
-)
+    # Create a drawable canvas with the frame as the background for drawing the square
+    st.markdown("## Выделите область, окружающую конвейер.")
+    canvas_result_square = st_canvas(
+        fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+        stroke_width=2,
+        stroke_color='#e00',
+        background_image=Image.fromarray(frame),
+        update_streamlit=True,
+        height=frame.shape[0],
+        width=frame.shape[1],
+        drawing_mode='rect',
+        key="canvas_square",
+    )
 
-# Create a drawable canvas with the frame as the background for drawing the line
-st.markdown("## Нарисуйте линию подсчёта")
-canvas_result_line = st_canvas(
-    fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
-    stroke_width=2,
-    stroke_color='#e00',
-    background_image=Image.fromarray(frame),
-    update_streamlit=True,
-    height=frame.shape[0],
-    width=frame.shape[1],
-    drawing_mode='line',
-    key="canvas_line",
-)
+    # Create a drawable canvas with the frame as the background for drawing the line
+    st.markdown("## Нарисуйте линию подсчёта")
+    canvas_result_line = st_canvas(
+        fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+        stroke_width=2,
+        stroke_color='#e00',
+        background_image=Image.fromarray(frame),
+        update_streamlit=True,
+        height=frame.shape[0],
+        width=frame.shape[1],
+        drawing_mode='line',
+        key="canvas_line",
+    )
 
-# The data in the canvas (lines, shapes, etc) is in the `canvas_result.json_data` attribute
-if canvas_result_square.json_data is not None and len(canvas_result_square.json_data["objects"])>0:
-    # Extract the coordinates of the square
-    x1 = canvas_result_square.json_data["objects"][0]["left"]
-    x2 = x1 + canvas_result_square.json_data["objects"][0]["width"]
-    y1 = canvas_result_square.json_data["objects"][0]["top"]
-    y2 = y1 + canvas_result_square.json_data["objects"][0]["height"]
-    st.write("Координаты ограничивающей области:", x1, y1, x2, y2)
+    # The data in the canvas (lines, shapes, etc) is in the `canvas_result.json_data` attribute
+    if canvas_result_square.json_data is not None and len(canvas_result_square.json_data["objects"])>0:
+        # Extract the coordinates of the square
+        x1 = canvas_result_square.json_data["objects"][0]["left"]
+        x2 = x1 + canvas_result_square.json_data["objects"][0]["width"]
+        y1 = canvas_result_square.json_data["objects"][0]["top"]
+        y2 = y1 + canvas_result_square.json_data["objects"][0]["height"]
+        st.write("Координаты ограничивающей области:", x1, y1, x2, y2)
 
-if canvas_result_line.json_data is not None and len(canvas_result_line.json_data["objects"])>0:
-    # Extract the coordinates of the line
-    lx1 = canvas_result_line.json_data["objects"][0]["left"] - canvas_result_line.json_data["objects"][0]["width"]//2
-    lx2 = lx1 + canvas_result_line.json_data["objects"][0]["width"]
-    ly1 = canvas_result_line.json_data["objects"][0]["top"]
-    ly2 = ly1 + canvas_result_line.json_data["objects"][0]["height"]
-    st.write("Координаты линии подсчёта:", lx1, ly1, lx2, ly2)
+    if canvas_result_line.json_data is not None and len(canvas_result_line.json_data["objects"])>0:
+        # Extract the coordinates of the line
+        lx1 = canvas_result_line.json_data["objects"][0]["left"] - canvas_result_line.json_data["objects"][0]["width"]//2
+        lx2 = lx1 + canvas_result_line.json_data["objects"][0]["width"]
+        ly1 = canvas_result_line.json_data["objects"][0]["top"]
+        ly2 = ly1 + canvas_result_line.json_data["objects"][0]["height"]
+        st.write("Координаты линии подсчёта:", lx1, ly1, lx2, ly2)
 
-# Send the data to the backend
-if st.button('Подтвердить'):
-    response = requests.post('http://backend:8543/count/', json={
-        'selection_area': str([x1, y1, x2, y2]),
-        'counting_line': str([lx1, ly1, lx2, ly2]),
-        'camera_id': camera_ids[source_radio],
-        'product_id': breads[bread_select]
-    })
-    if response.status_code == 200:
-        st.write('Запрос на подсчёт отправлен успешно.')
-    else:
-        st.write('Не удалось отправить данные.')
-        st.write(response.text)
+    # Send the data to the backend
+    if st.button('Подтвердить'):
+        response = requests.post('http://backend:8543/count/', json={
+            'selection_area': str([x1, y1, x2, y2]),
+            'counting_line': str([lx1, ly1, lx2, ly2]),
+            'camera_id': camera_ids[source_radio],
+            'product_id': breads[bread_select]
+        })
+        if response.status_code == 200:
+            st.write('Запрос на подсчёт отправлен успешно.')
+        else:
+            st.write('Не удалось отправить данные.')
+            st.write(response.text)
+except cv2.error:
+    st.markdown("Не удалось получить изображения.")

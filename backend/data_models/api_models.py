@@ -17,6 +17,7 @@ class CountingRequest(BaseModel):
     product_id: int
     selection_area: Optional[str] = None
     counting_line: Optional[str] = None
+    status : int
 
 
 class LabelingRequest(BaseModel):
@@ -30,4 +31,3 @@ class CountingResult(BaseModel):
     product_id: int
     timestamp: datetime
     count: int
-    status : int

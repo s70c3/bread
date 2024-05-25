@@ -27,7 +27,7 @@ import requests
 import streamlit as st
 
 # Fetch the list of counting requests
-response = requests.get('http://backend:8543/counting_requests/')
+response = requests.get('http://backend:8543/count_info/')
 if response.status_code == 200:
     counting_requests = response.json()
 else:
@@ -44,7 +44,7 @@ selected_request = next((request for request in counting_requests if request['ca
 
 if selected_request is not None:
     # Get the RTSP and product name from the selected counting request
-    rtsp = selected_request['camera_rtsp']
+    rtsp = selected_request['rtsp_stream']
     product_name = selected_request['product_name']
     selection_area = selected_request['selection_area']
     counting_line = selected_request['counting_line']

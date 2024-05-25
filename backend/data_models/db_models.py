@@ -45,8 +45,9 @@ class LabelingRequest(Base):
 
 class CountingRequest(Base):
     __tablename__ = 'counting_requests'
-    product_id = Column(Integer, ForeignKey('bread_products.product_id'), primary_key=True)
-    camera_id = Column(Integer, ForeignKey('cameras.camera_id'), primary_key=True)
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('bread_products.product_id'))
+    camera_id = Column(Integer, ForeignKey('cameras.camera_id'))
     selection_area = Column(String)
     counting_line = Column(String)
     camera = relationship("Camera", back_populates="counting_requests")
