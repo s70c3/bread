@@ -51,7 +51,7 @@ class CountingRequest(Base):
     counting_line = Column(String)
     camera = relationship("Camera", back_populates="counting_requests")
     product = relationship("BreadProduct", back_populates="counting_requests")
-
+    status = Column(Integer)
 
 class CountingResult(Base):
     __tablename__ = 'counting_results'

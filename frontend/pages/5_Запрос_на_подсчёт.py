@@ -6,6 +6,65 @@ import requests
 
 st.header("Запрос на подсчёт хлебобулочных изделий")
 
+
+# Main page heading
+st.subheader("Активные запросы на подсчёт")
+
+# Make a GET request to the /count/ endpoint
+response = requests.get("http://backend:8543/count_info/")
+
+# Check if the request was successful
+if response.status_code == 200:
+    # Get the counting requests from the response
+    counting_requests = response.json()
+
+    # Display the counting requests in a table
+    st.table(counting_requests)
+
+    # Allow the user to select a counting request to update or delete
+    request_id = st.selectbox('Выберите запрос для управления', [req['id'] for req in counting_requests])
+
+    # If the user chooses to update a counting request
+    if st.button('Обновить'):
+        # Display a form with the current details of the counting request
+        request = next((req for req in counting_requests if req['id'] == request_id), None)
+        if request:
+            new_camera_id = st.text_input('Имя камеры', request['camera_name'])
+            new_product_id = st.text_input('Имя продукта', request['product_name'])
+            new_selection_area = st.text_input('Зона выбора', request['selection_area'])
+            new_counting_line = st.text_input('Линия подсчёта', request['counting_line'])
+            new_status = st.text_input('Статус', request['status'])
+
+            # Send the updated counting request to the backend
+            response = requests.put(f"http://backend:8543/count/{request_id}", json={
+                'camera_id': new_camera_id,
+                'product_id': new_product_id,
+                'selection_area': new_selection_area,
+                'counting_line': new_counting_line,
+                'status' : new_status
+            })
+            if response.status_code == 200:
+                st.success('Запрос на подсчёт успешно обновлен.')
+            else:
+                st.error('Не удалось обновить подсчёт.')
+
+    # If the user chooses to delete a counting request
+    elif st.button('Удалить'):
+        # Confirm the deletion before sending the delete request to the backend
+        if st.confirm('Вы точно хотите удалить?'):
+            response = requests.delete(f"http://backend:8543/count/{request_id}")
+            if response.status_code == 200:
+                st.success("Запрос на подсчёт успешно удалён.")
+            else:
+                st.error('Не удалось удалить запрос.')
+
+
+else:
+    st.error("Не удалось получить текущие подключения.")
+
+# Main page heading
+st.subheader("Создание запроса на подсчёт")
+
 st.text("Для запроса необходимо выбрать соответствующие камеру и изделие.")
 st.text("Добавьте камеру в на странице 'Управление камерами', а продукт на странице 'Управление продуктами'.")
 # Fetch the list of cameras
@@ -69,8 +128,6 @@ canvas_result_line = st_canvas(
     drawing_mode='line',
     key="canvas_line",
 )
-
-
 
 # The data in the canvas (lines, shapes, etc) is in the `canvas_result.json_data` attribute
 if canvas_result_square.json_data is not None and len(canvas_result_square.json_data["objects"])>0:

@@ -19,7 +19,7 @@ class Producer:
             cls._instance = super(Producer, cls).__new__(cls)
         return cls._instance
     def __init__(self, video_sources=None):
-        mp.set_start_method('forkserver', force=True)
+        # mp.set_start_method('spawn', force=True)
         if video_sources is None:
             video_sources = []
         self.video_sources = video_sources
@@ -31,55 +31,48 @@ class Producer:
             return "Processes are already running"
 
         for i, video_source in enumerate(self.video_sources):
-            rtsp, camera_id, bread_id, selection_area, counting_line = video_source
-            counting_line = ast.literal_eval(counting_line)
-            LINE_START = sv.Point(counting_line[0], counting_line[1])
-            LINE_END = sv.Point(counting_line[2], counting_line[3])
+            self.add_stream(video_source)
 
-            line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
-            tracker = sv.ByteTrack()
-            process = mp.Process(target=self._read_video, args=(rtsp,
-                                                             tracker, line_counter))
-            self.processes.append(process)
+        for process in self.processes:
             process.start()
-
         for process in self.processes:
             process.join()
 
         print("Количество процессов: ",len(self.processes))
         self.is_running = True
 
-    def add_stream(self, video_source, ):
+    def add_stream(self, video_source):
         # create instance of BoxAnnotator and LineCounterAnnotator
-        rtsp, camera_id, bread_id, selection_area, counting_line = video_source
+        rtsp, camera_id, bread_id, name, selection_area, counting_line, status = video_source
         counting_line = ast.literal_eval(counting_line)
         LINE_START = sv.Point(counting_line[0], counting_line[1])
         LINE_END = sv.Point(counting_line[2], counting_line[3])
-
+        if status == 0:
+            return
         self.video_sources.append(video_source)
         line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
         tracker = sv.ByteTrack()
-        process = mp.Process(target=self._read_video, args=(video_source,
-                                                         tracker, line_counter, camera_id, bread_id))
+        process = mp.Process(target=self._read_video, args=(rtsp,
+                                                         tracker, line_counter, camera_id, bread_id, name))
+
         self.processes.append(process)
-        process.start()
 
-        process.join()
 
-    def _read_video(self, video_source, tracker, line_counter, camera_id=1, product_id=1):
-            cap = cv2.VideoCapture(video_source)
+    def _read_video(self, rtsp, tracker, line_counter, camera_id=1, product_id=1, name="notaclassname"):
+            cap = cv2.VideoCapture(rtsp)
             frame_counter = 0
             while True:
                 ret, frame = cap.read()
                 frame_counter+=1
                 if not ret:
                     break
-                tracker, count = process_data(frame, tracker, line_counter, camera_id, product_id)
-                if frame_counter % 20 == 0:
+                tracker, count = process_data(frame, tracker, line_counter, camera_id, name)
+                if frame_counter % 5 == 0:
 
                     data = {
                         "camera_id": camera_id,
                         "product_id": product_id,
+                        "name": name,
                         "count": count,
                         "timestamp" : time.time()
                     }

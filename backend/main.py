@@ -8,7 +8,6 @@ import backend.data_models.db_models as models
 from backend.data_models.api_models import *
 from backend.counting.counting import Producer
 
-
 app = FastAPI()
 
 producer = Producer()
@@ -25,6 +24,7 @@ def get_db():
     finally:
         db.close()
 
+
 # Подключение к rtsp-потоку
 @app.post("/camera/")
 def create_camera(camera: Camera, db: Session = Depends(get_db)):
@@ -36,11 +36,13 @@ def create_camera(camera: Camera, db: Session = Depends(get_db)):
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Camera with this name already exists")
 
+
 # Просмотр списка всех камер
 @app.get("/camera/")
 def get_cameras(db: Session = Depends(get_db)):
     cameras = db.query(models.Camera).all()
     return {"cameras": cameras}
+
 
 # Изменение информации о камере
 @app.put("/camera/{camera_id}")
@@ -52,6 +54,7 @@ def update_camera(camera_id: int, camera: Camera, db: Session = Depends(get_db))
         db.commit()
         return {"message": "Camera updated successfully"}
     raise HTTPException(status_code=404, detail="Camera not found")
+
 
 # Удаление камеры
 @app.delete("/camera/{camera_id}")
@@ -76,7 +79,6 @@ def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Bread product with this name already exists")
 
 
-
 # Создание нового изделия
 @app.post("/label/")
 def create_dataset(dataset: LabelingRequest, db: Session = Depends(get_db)):
@@ -97,6 +99,7 @@ def create_counting_result(counting_result: CountingResult, db: Session = Depend
     db.refresh(db_counting_result)
     return db_counting_result
 
+
 @app.get("/stopcount/")
 def stop_counting(db: Session = Depends(get_db)):
     producer.stop()
@@ -104,13 +107,15 @@ def stop_counting(db: Session = Depends(get_db)):
 
 @app.get("/count/")
 def start_counting(db: Session = Depends(get_db)):
-
-    streams = [(db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
-                dataset.camera_id,
-                dataset.product_id,
-                dataset.selection_area,
-                dataset.counting_line)
-               for dataset in db.query(models.CountingRequest).all()]
+    streams = [(
+        db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
+        dataset.camera_id,
+        dataset.product_id,
+        db.query(models.BreadProduct).filter(
+            models.BreadProduct.product_id == dataset.product_id).first().name,
+        dataset.selection_area,
+        dataset.counting_line)
+        for dataset in db.query(models.CountingRequest).filter(models.CountingRequest.status is 1).all()]
 
     # Create an instance of the Counting class with all streams
 
@@ -121,6 +126,27 @@ def start_counting(db: Session = Depends(get_db)):
     producer.start()
 
     return streams
+
+
+# Просмотр списка всех изделий
+
+@app.get("/count_info/")
+def start_counting(db: Session = Depends(get_db)):
+    streams = [
+        {
+            'rtsp_stream': db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
+            'camera_name': db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().name,
+            'product_name': db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.product_id).first().name,
+            'selection_area': dataset.selection_area,
+            'counting_line': dataset.counting_line,
+            'status': dataset.status
+        }
+        for dataset in db.query(models.CountingRequest).all()
+    ]
+
+    return streams
+
+
 # Просмотр списка всех изделий
 
 @app.post("/count/")
@@ -129,17 +155,42 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
     db.add(new_request)
     db.commit()
     # Get all streams from the CountRequest table
-
+    if counting_request.status == 0:
+        return {"message": "Counting request added, but is not active"}
     # Создание экземпляра класса Producer
-    producer.add_stream((db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
-                         counting_request.camera_id,
-                         counting_request.product_id,
-                         counting_request.selection_area,
-                         counting_request.counting_line))
+    producer.add_stream(
+        (db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
+         counting_request.camera_id,
+         counting_request.product_id,
+         db.query(models.BreadProduct).filter(
+             models.BreadProduct.product_id == counting_request.product_id).first().name,
+         counting_request.selection_area,
+         counting_request.counting_line))
     # Запуск чтения видео и отправки кадров на обработку
 
     return {"message": "Counting started for all streams"}
 
+
+# Update a counting request
+@app.put("/count/{request_id}")
+def update_counting_request(request_id: int, counting_request: CountingRequest, db: Session = Depends(get_db)):
+    db_counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.id == request_id).first()
+    if db_counting_request:
+        for var, value in vars(counting_request).items():
+            setattr(db_counting_request, var, value) if value else None
+        db.commit()
+        return {"message": "Counting request updated successfully"}
+    raise HTTPException(status_code=404, detail="Counting request not found")
+
+# Delete a counting request
+@app.delete("/count/{request_id}")
+def delete_counting_request(request_id: int, db: Session = Depends(get_db)):
+    db_counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.id == request_id).first()
+    if db_counting_request:
+        db.delete(db_counting_request)
+        db.commit()
+        return {"message": "Counting request deleted successfully"}
+    raise HTTPException(status_code=404, detail="Counting request not found")
 
 @app.get("/counting_request/{request_id}")
 def get_counting_request(request_id: int, db: Session = Depends(get_db)):
@@ -148,36 +199,24 @@ def get_counting_request(request_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Counting request not found")
 
     camera = db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first()
-    product = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == counting_request.product_id).first()
+    product = db.query(models.BreadProduct).filter(
+        models.BreadProduct.product_id == counting_request.product_id).first()
 
     return {
         'camera_name': camera.name,
         'camera_rtsp': camera.rtsp_stream,
         'product_id': product.product_id,
-        'product_name': product.name
+        'product_name': product.name,
+        'status' : counting_request.status
     }
-@app.get("/counting_requests/")
-def get_all_counting_requests(db: Session = Depends(get_db)):
-    counting_requests = db.query(models.CountingRequest).all()
-    result = []
-    for counting_request in counting_requests:
-        camera = db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first()
-        product = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == counting_request.product_id).first()
-        result.append({
-            'camera_id' : counting_request.camera_id,
-            'camera_name': camera.name,
-            'camera_rtsp': camera.rtsp_stream,
-            'product_id': product.product_id,
-            'product_name': product.name,
-            'selection_area': counting_request.selection_area,
-            'counting_line': counting_request.counting_line
-        })
-    return result
+
+
 # Просмотр списка всех изделий
 @app.get("/bread/")
 def get_breads(db: Session = Depends(get_db)):
     breads = db.query(models.BreadProduct).all()
     return {"breads": breads}
+
 
 # Удаление изделия
 @app.delete("/bread/{bread_id}")

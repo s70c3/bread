@@ -8,8 +8,6 @@ class Camera(BaseModel):
     description: Optional[str] = None
     rtsp_stream: Optional[str] = None
 
-
-
 class BreadProduct(BaseModel):
     name: str
     photos: Optional[List[str]] = None
@@ -32,3 +30,4 @@ class CountingResult(BaseModel):
     product_id: int
     timestamp: datetime
     count: int
+    status : int
