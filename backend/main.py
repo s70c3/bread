@@ -115,7 +115,7 @@ def start_counting(db: Session = Depends(get_db)):
             models.BreadProduct.product_id == dataset.product_id).first().name,
         dataset.selection_area,
         dataset.counting_line)
-        for dataset in db.query(models.CountingRequest).filter(models.CountingRequest.status is 1).all()]
+        for dataset in db.query(models.CountingRequest).filter(models.CountingRequest.status == 1).all()]
 
     # Create an instance of the Counting class with all streams
 
