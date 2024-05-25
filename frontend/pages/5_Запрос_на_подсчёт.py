@@ -26,13 +26,14 @@ if response.status_code == 200:
 
     # Ask the user if they want to edit or delete the selected row
     action = st.selectbox('Вы хотите изменить или удалить запрос?', options=['Изменить', 'Удалить'])
+    request = next((req for req in counting_requests if
+                    (req['camera_name'] == request_id[0] and req['product_name'] == request_id[1])), None)
 
     if action == 'Изменить':
         with st.form(key='edit_form'):
         # If the user chooses to update a counting request
             # Display a form with the current details of the counting request
-            request = next((req for req in counting_requests if (req['camera_name'] == request_id[0] and req['product_name'] == request_id[1])), None)
-            # st.text(request)
+           # st.text(request)
             if request:
                     new_selection_area = st.text_input('Зона выбора', request['selection_area'])
                     new_counting_line = st.text_input('Линия подсчёта', request['counting_line'])
@@ -57,7 +58,7 @@ if response.status_code == 200:
     if action =='Удалить':
         # Confirm the deletion before sending the delete request to the backend
         if st.button('Подтвердить удаление'):
-            response = requests.delete(f"http://backend:8543/count/{request_id}")
+            response = requests.delete(f"http://backend:8543/count/{request['id']}")
             if response.status_code == 200:
                 st.success("Запрос на подсчёт успешно удалён.")
             else:

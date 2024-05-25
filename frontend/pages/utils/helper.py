@@ -18,7 +18,7 @@ def load_model(model_path):
     return model
 
 
-def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counter=None, line_annotator=None, box_annotator=None):
+def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counter=None, line_annotator=None, box_annotator=None, selection_area=None):
     """
     Display the detected objects on a video frame using the YOLOv8 model.
 
@@ -35,6 +35,7 @@ def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counte
 
     # Resize the image to a standard size
     frame = cv2.resize(frame, (720, int(720 * (9 / 16))))
+    frame = frame[selection_area[1]:selection_area[3], selection_area[0]:selection_area[2]]
     results = model(frame)[0]
 
     detections = sv.Detections.from_ultralytics(results)
@@ -69,7 +70,7 @@ def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counte
 
 
 
-def play_rtsp_stream(model, source_rtsp, counting_line):
+def play_rtsp_stream(model, source_rtsp, counting_line, selection_area):
     """
     Plays an rtsp stream. Detects Objects in real-time using the YOLOv8 object detection model.
 
@@ -85,8 +86,9 @@ def play_rtsp_stream(model, source_rtsp, counting_line):
     """
     tracker = sv.ByteTrack()
     counting_line = ast.literal_eval(counting_line)
-    LINE_START = sv.Point(counting_line[0], counting_line[1])
-    LINE_END = sv.Point(counting_line[2], counting_line[3])
+    selection_area = ast.literal_eval(selection_area)
+    LINE_START = sv.Point(counting_line[0]-selection_area[1], counting_line[1])
+    LINE_END = sv.Point(counting_line[2]-selection_area[1], counting_line[3])
 
     box_annotator = sv.BoxAnnotator(color=sv.ColorPalette.default(), thickness=1, text_thickness=1, text_scale=1)
     line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
@@ -108,7 +110,7 @@ def play_rtsp_stream(model, source_rtsp, counting_line):
                                          tracker,
                                          line_counter,
                                          line_annotator,
-                                         box_annotator
+                                         box_annotator, selection_area
                                          )
             else:
                 vid_cap.release()

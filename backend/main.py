@@ -79,6 +79,35 @@ def create_bread(bread: BreadProduct, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Bread product with this name already exists")
 
 
+@app.put("/bread/{product_id}")
+def update_product(product_id: int, product: BreadProduct, db: Session = Depends(get_db)):
+    db_product = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == product_id).first()
+    if db_product:
+        for var, value in vars(product).items():
+            setattr(db_product, var, value) if value else None
+        db.commit()
+        return {"message": "Продукт успешно обновлен."}
+    raise HTTPException(status_code=404, detail="Продукт не найден.")
+
+# Просмотр списка всех изделий
+@app.get("/bread/")
+def get_breads(db: Session = Depends(get_db)):
+    breads = db.query(models.BreadProduct).all()
+    return {"breads": breads}
+
+
+# Удаление изделия
+@app.delete("/bread/{bread_id}")
+def delete_bread(bread_id: int, db: Session = Depends(get_db)):
+    db_bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == bread_id).first()
+    if db_bread:
+        db.delete(db_bread)
+        db.commit()
+        return {"message": "Bread product deleted successfully"}
+    raise HTTPException(status_code=404, detail="Bread product not found")
+
+
+
 # Создание нового изделия
 @app.post("/label/")
 def create_dataset(dataset: LabelingRequest, db: Session = Depends(get_db)):
@@ -119,7 +148,6 @@ def start_counting(db: Session = Depends(get_db)):
         for dataset in db.query(models.CountingRequest).filter(models.CountingRequest.status == 1).all()]
 
     # Create an instance of the Counting class with all streams
-
     # Создание экземпляра класса Producer
     producer = Producer(streams)
 
@@ -169,7 +197,8 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
          db.query(models.BreadProduct).filter(
              models.BreadProduct.product_id == counting_request.product_id).first().name,
          counting_request.selection_area,
-         counting_request.counting_line))
+         counting_request.counting_line,
+         counting_request.status))
     # Запуск чтения видео и отправки кадров на обработку
 
     return {"message": "Counting started for all streams"}
@@ -214,23 +243,6 @@ def get_counting_request(request_id: int, db: Session = Depends(get_db)):
         'status' : counting_request.status
     }
 
-
-# Просмотр списка всех изделий
-@app.get("/bread/")
-def get_breads(db: Session = Depends(get_db)):
-    breads = db.query(models.BreadProduct).all()
-    return {"breads": breads}
-
-
-# Удаление изделия
-@app.delete("/bread/{bread_id}")
-def delete_bread(bread_id: int, db: Session = Depends(get_db)):
-    db_bread = db.query(models.BreadProduct).filter(models.BreadProduct.product_id == bread_id).first()
-    if db_bread:
-        db.delete(db_bread)
-        db.commit()
-        return {"message": "Bread product deleted successfully"}
-    raise HTTPException(status_code=404, detail="Bread product not found")
 
 
 # Подсчет изделий

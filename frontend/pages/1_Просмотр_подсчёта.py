@@ -51,7 +51,7 @@ if selected_request is not None:
     counting_line = selected_request['counting_line']
     model = YOLO('/model/yolo.pt')
 
-    helper.play_rtsp_stream(model, rtsp, counting_line)
+    helper.play_rtsp_stream(model, rtsp, counting_line, selection_area)
 
 else:
     st.error('Не удалось найти выбранную пару. Проверьте данные.')

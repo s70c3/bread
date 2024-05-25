@@ -28,7 +28,7 @@ class Producer:
 
     def start(self):
         if self.is_running:
-            return "Processes are already running"
+            return "Процессы уже запущены."
 
         for i, video_source in enumerate(self.video_sources):
             self.add_stream(video_source)
@@ -45,28 +45,33 @@ class Producer:
         # create instance of BoxAnnotator and LineCounterAnnotator
         rtsp, camera_id, bread_id, name, selection_area, counting_line, status = video_source
         counting_line = ast.literal_eval(counting_line)
-        LINE_START = sv.Point(counting_line[0], counting_line[1])
-        LINE_END = sv.Point(counting_line[2], counting_line[3])
+        selection_area = ast.literal_eval(selection_area)
+        LINE_START = sv.Point(counting_line[0] - selection_area[1], counting_line[1])
+        LINE_END = sv.Point(counting_line[2] - selection_area[1], counting_line[3])
         if status == 0:
             return
         self.video_sources.append(video_source)
         line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
         tracker = sv.ByteTrack()
         process = mp.Process(target=self._read_video, args=(rtsp,
-                                                         tracker, line_counter, camera_id, bread_id, name))
+                                                         tracker, line_counter, camera_id, bread_id, name, selection_area))
 
         self.processes.append(process)
 
 
-    def _read_video(self, rtsp, tracker, line_counter, camera_id=1, product_id=1, name="notaclassname"):
+    def _read_video(self, rtsp, tracker, line_counter, camera_id=1, product_id=1, name="notaclassname", selection_area=None):
             cap = cv2.VideoCapture(rtsp)
+            ret, frame = cap.read()
+            if selection_area is None:
+                selection_area = [0,0, frame.shape[0], frame.shape[1]]
+
             frame_counter = 0
             while True:
                 ret, frame = cap.read()
                 frame_counter+=1
                 if not ret:
                     break
-                tracker, count = process_data(frame, tracker, line_counter, camera_id, name)
+                tracker, count = process_data(frame, tracker, line_counter, camera_id, name, selection_area)
                 if frame_counter % 5 == 0:
 
                     data = {
