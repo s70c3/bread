@@ -50,9 +50,8 @@ if selected_request is not None:
     selection_area = selected_request['selection_area']
     counting_line = selected_request['counting_line']
     model = YOLO('/model/yolo.pt')
-    try:
-        helper.play_rtsp_stream(model, rtsp, counting_line)
-    except cv2.error:
-        st.error("Не удалось получить изображение.")
+
+    helper.play_rtsp_stream(model, rtsp, counting_line)
+
 else:
     st.error('Не удалось найти выбранную пару. Проверьте данные.')

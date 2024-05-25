@@ -34,7 +34,6 @@ def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counte
     """
 
     # Resize the image to a standard size
-
     frame = cv2.resize(frame, (720, int(720 * (9 / 16))))
     results = model(frame)[0]
 
@@ -46,7 +45,7 @@ def _display_detected_frames( model, st_frame, frame,  tracker=None, line_counte
     # format custom labels
     # dict maping class_id to class_name
 
-    frame = box_annotator.annotate(scene=frame, detections=detections)
+    # frame = box_annotator.annotate(scene=frame, detections=detections)
     line_annotator.annotate(frame=frame, line_counter=line_counter)
 
     label_annotator = sv.LabelAnnotator()
@@ -89,14 +88,15 @@ def play_rtsp_stream(model, source_rtsp, counting_line):
     LINE_START = sv.Point(counting_line[0], counting_line[1])
     LINE_END = sv.Point(counting_line[2], counting_line[3])
 
-    box_annotator = sv.BoxAnnotator(color=sv.ColorPalette.default(), thickness=0.5, text_thickness=0.5, text_scale=0.5)
+    box_annotator = sv.BoxAnnotator(color=sv.ColorPalette.default(), thickness=1, text_thickness=1, text_scale=1)
     line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
     # create instance of BoxAnnotator and LineCounterAnnotator
-    line_annotator = sv.LineZoneAnnotator(thickness=1, text_thickness=0.5, text_scale=0.5)
-
+    line_annotator = sv.LineZoneAnnotator(thickness=1, text_thickness=1, text_scale=1)
     try:
         vid_cap = cv2.VideoCapture(source_rtsp)
         st_frame = st.empty()
+        if vid_cap.isOpened() is False:
+            st.error("Нет соединения с потоком")
         while (vid_cap.isOpened()):
             success, image = vid_cap.read()
 
@@ -115,4 +115,4 @@ def play_rtsp_stream(model, source_rtsp, counting_line):
                 break
     except Exception as e:
         vid_cap.release()
-        st.sidebar.error("Не получен видео поток: " + str(e))
+        st.error("Не получен видео поток: " + str(e))

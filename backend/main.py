@@ -132,10 +132,13 @@ def start_counting(db: Session = Depends(get_db)):
 # Просмотр списка всех изделий
 
 @app.get("/count_info/")
-def start_counting(db: Session = Depends(get_db)):
+def counting_requests_info(db: Session = Depends(get_db)):
     streams = [
         {
+            'id':dataset.id,
             'rtsp_stream': db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
+            'camera_id' : dataset.camera_id,
+            'product_id' : dataset.product_id,
             'camera_name': db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().name,
             'product_name': db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.product_id).first().name,
             'selection_area': dataset.selection_area,

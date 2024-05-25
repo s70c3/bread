@@ -25,27 +25,25 @@ if response.status_code == 200:
     request_id = st.selectbox('Выберите запрос для управления', [(req['camera_name'], req['product_name']) for req in counting_requests])
 
     # Ask the user if they want to edit or delete the selected row
-    action = st.selectbox('Вы хотите изменить или удалить камеру?', options=['Изменить', 'Удалить'])
+    action = st.selectbox('Вы хотите изменить или удалить запрос?', options=['Изменить', 'Удалить'])
 
     if action == 'Изменить':
         with st.form(key='edit_form'):
         # If the user chooses to update a counting request
             # Display a form with the current details of the counting request
             request = next((req for req in counting_requests if (req['camera_name'] == request_id[0] and req['product_name'] == request_id[1])), None)
-
+            # st.text(request)
             if request:
-                    new_camera_id = st.text_input('Имя камеры', request['camera_name'])
-                    new_product_id = st.text_input('Имя продукта', request['product_name'])
                     new_selection_area = st.text_input('Зона выбора', request['selection_area'])
                     new_counting_line = st.text_input('Линия подсчёта', request['counting_line'])
-                    new_status = st.text_input('Статус', request['status'])
+                    new_status = st.text_input('Статус (1 - работает, 0 - выключено)', request['status'])
                     submit_button = st.form_submit_button(label='Подтвердить')
 
                     if submit_button:
                     # Send the updated counting request to the backend
                         response = requests.put(f"http://backend:8543/count/{request['id']}", json={
-                            'camera_id': new_camera_id,
-                            'product_id': new_product_id,
+                            'camera_id': request['camera_id'],
+                            'product_id' : request['product_id'],
                             'selection_area': new_selection_area,
                             'counting_line': new_counting_line,
                             'status' : new_status
@@ -159,12 +157,26 @@ try:
             'selection_area': str([x1, y1, x2, y2]),
             'counting_line': str([lx1, ly1, lx2, ly2]),
             'camera_id': camera_ids[source_radio],
-            'product_id': breads[bread_select]
+            'product_id': breads[bread_select],
+            'status' : 1
         })
         if response.status_code == 200:
             st.write('Запрос на подсчёт отправлен успешно.')
         else:
             st.write('Не удалось отправить данные.')
+
             st.write(response.text)
 except cv2.error:
-    st.markdown("Не удалось получить изображения.")
+    if st.button('Подтвердить'):
+        response = requests.post('http://backend:8543/count/', json={
+            'selection_area': str([0, 0, 3000, 3000]),
+            'counting_line': str([0, 300, 3000, 300]),
+            'camera_id': camera_ids[source_radio],
+            'product_id': breads[bread_select],
+            'status' : 0
+        })
+        if response.status_code == 200:
+            st.write('Запрос на подсчёт отправлен успешно.')
+        else:
+            st.write('Не удалось отправить данные.')
+    st.error("Нет подключения к потоку. Запрос можно отправить без указания области.")
