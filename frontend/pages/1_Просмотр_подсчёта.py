@@ -1,6 +1,7 @@
 # Python In-built packages
 from pathlib import Path
 import PIL
+import cv2
 
 # External packages
 import streamlit as st
@@ -48,7 +49,10 @@ if selected_request is not None:
     product_name = selected_request['product_name']
     selection_area = selected_request['selection_area']
     counting_line = selected_request['counting_line']
+    model = YOLO('/model/yolo.pt')
+    try:
+        helper.play_rtsp_stream(model, rtsp, counting_line)
+    except cv2.error:
+        st.error("Не удалось получить изображение.")
 else:
     st.error('Не удалось найти выбранную пару. Проверьте данные.')
-model = YOLO('/model/yolo.pt')
-helper.play_rtsp_stream(model, rtsp, counting_line)

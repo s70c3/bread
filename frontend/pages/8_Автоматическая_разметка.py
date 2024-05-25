@@ -26,29 +26,32 @@ source_radio = st.radio("Выберите камеру", sources.keys())
 bread_select = st.selectbox('Выберите хлебобулочное изделие', list(breads.keys()))
 
 stream_address= str(sources.get(source_radio))
+try:
+    # Fetch the RTSP stream
+    stream = cv2.VideoCapture(stream_address)
 
-# Fetch the RTSP stream
-stream = cv2.VideoCapture(stream_address)
+    # Capture a frame from the stream
+    ret, frame = stream.read()
 
-# Capture a frame from the stream
-ret, frame = stream.read()
+    # Convert the frame to RGB
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = cv2.resize(frame, (720, int(720*(9/16))))
 
-# Convert the frame to RGB
-frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-frame = cv2.resize(frame, (720, int(720*(9/16))))
+    st.markdown("Проверьте, что на конвейере выбранный тип продукции.")
+    st.image(frame)
 
-st.markdown("Проверьте, что на конвейере выбранный тип продукции.")
-st.image(frame)
+    # Send the data to the backend
+    if st.button('Подтвердить'):
+        response = requests.post('http://backend:8543/label/', json={
+            'camera_id': camera_ids[source_radio],
+            'product_id': breads[bread_select],
+            'name' : bread_select
+        })
+        if response.status_code == 200:
+            st.write('Запрос на разметку отправлен успешно.')
+        else:
+            st.write('Не удалось отправить данные.')
+            st.write(response.text)
 
-# Send the data to the backend
-if st.button('Подтвердить'):
-    response = requests.post('http://backend:8543/label/', json={
-        'camera_id': camera_ids[source_radio],
-        'product_id': breads[bread_select],
-        'name' : bread_select
-    })
-    if response.status_code == 200:
-        st.write('Запрос на разметку отправлен успешно.')
-    else:
-        st.write('Не удалось отправить данные.')
-        st.write(response.text)
+except cv2.error:
+    st.error("Не удалось получить видео поток.")
