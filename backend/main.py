@@ -4,15 +4,13 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-import backend.data_models.db_models as models
-from backend.data_models.api_models import *
-from backend.counting.counting import Producer
+import data_models.db_models as models
+from data_models.api_models import *
 
 app = FastAPI()
 
-producer = Producer()
 
-from backend.data_models.db_models import SessionLocal
+from data_models.db_models import SessionLocal
 from backend.autolabel.worker import label_data
 
 
@@ -131,28 +129,11 @@ def create_counting_result(counting_result: CountingResult, db: Session = Depend
 
 @app.get("/stopcount/")
 def stop_counting(db: Session = Depends(get_db)):
-    producer.stop()
+    p
 
 
 @app.get("/count/")
 def start_counting(db: Session = Depends(get_db)):
-    streams = [(
-        db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
-        dataset.camera_id,
-        dataset.product_id,
-        db.query(models.BreadProduct).filter(
-            models.BreadProduct.product_id == dataset.product_id).first().name,
-        dataset.selection_area,
-        dataset.counting_line,
-        dataset.status)
-        for dataset in db.query(models.CountingRequest).filter(models.CountingRequest.status == 1).all()]
-
-    # Create an instance of the Counting class with all streams
-    # Создание экземпляра класса Producer
-    producer = Producer(streams)
-
-    # Запуск чтения видео и отправки кадров на обработку
-    producer.start()
 
     return streams
 

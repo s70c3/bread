@@ -31,3 +31,9 @@ class CountingResult(BaseModel):
     product_id: int
     timestamp: datetime
     count: int
+
+
+class Process(BaseModel):
+    id: int
+    command: str
+    status: str
