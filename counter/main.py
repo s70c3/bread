@@ -24,7 +24,7 @@ def get_db():
         db.close()
 
 processes = []
-process_ids = []
+process_ids = dict()
 
 
 
@@ -33,6 +33,7 @@ process_ids = []
 async def startup_event():
     db = next(get_db())
     video_sources =  [(
+        dataset.id,
         db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
         dataset.camera_id,
         dataset.product_id,
@@ -43,62 +44,51 @@ async def startup_event():
         dataset.status)
         for dataset in db.query(models.CountingRequest).filter(models.CountingRequest.status == 1).all()]
     for video_source in video_sources:
-        producer = Producer(video_source)
+        producer = Producer(video_source[1:])
         process = mp.Process(target=producer.start)
         process.start()
         processes.append(process)
-        process_ids.append(process.pid)
-    return {"process_ids": process_ids}
-
-@app.post("/processes/")
-def create_processes(video_sources: List[Tuple[str]]):
-    process_ids = []
-    for video_source in video_sources:
-        producer = Producer(video_source)
-        process = mp.Process(target=producer.start)
-        process.start()
-        new_process = Process(id=process.pid, command=str(video_source), status="running")
-        processes.append(new_process)
-        process_ids.append(process.pid)
-    return {"process_ids": process_ids}
-
-@app.post("/processes/")
-def create_processes(video_sources: List[Tuple[str]]):
-    process_ids = []
-    for video_source in video_sources:
-        process = mp.Process(target=Producer(list(video_source)).start)
-        process.start()
-        new_process = Process(id=process.pid, command=str(video_source), status="running")
-        processes.append(new_process)
-        process_ids.append(process.pid)
-    return {"process_ids": process_ids}
+        process_ids[int(video_source[0])]=process.pid
+    return process_ids
 
 @app.post("/process/")
-def create_process(video_source):
-    producer = Producer(video_source)
+def create_process(counting_request: CountingRequest, db: Session = Depends(get_db)):
+    video_source = (counting_request.id,
+    db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
+    counting_request.camera_id,
+    counting_request.product_id,
+    db.query(models.BreadProduct).filter(
+        models.BreadProduct.product_id == counting_request.product_id).first().name,
+    counting_request.selection_area,
+    counting_request.counting_line,
+    counting_request.status)
+    producer = Producer(video_source[1:])
     process = mp.Process(target=producer.start)
     process.start()
-    new_process = Process(id=process.pid, command=str(video_source), status="running")
-    processes.append(new_process)
-    return {"process_id": process.pid}
+    processes.append(process)
+    process_ids[video_source[0]]=process.pid
+    return process_ids
 
-@app.get("/process/{process_id}")
-def get_process(process_id: int):
+@app.get("/process/{request_id}")
+def get_process(request_id: int):
+    process_id = process_ids[request_id]
     for process in processes:
-        if process.id == process_id:
+        if process.pid == process_id:
             return process
     raise HTTPException(status_code=404, detail="Process not found")
 
-@app.delete("/process/{process_id}")
-def delete_process(process_id: int):
+@app.delete("/process/{request_id}")
+def delete_process(request_id: int):
+    process_id = process_ids[request_id]
     for process in processes:
-        if process.id == process_id:
+        if process.pid == process_id:
             process.kill()
             processes.remove(process)
+            process_ids.pop(request_id)
             return {"message": "Process killed successfully"}
     raise HTTPException(status_code=404, detail="Process not found")
 
 @app.get("/processes/")
 def get_processes():
-    return {"process_ids": process_ids}
+    return process_ids
 

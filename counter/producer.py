@@ -43,6 +43,7 @@ class Producer:
             return
         line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
         tracker = sv.ByteTrack()
+
         self._read_video(rtsp, tracker, line_counter, camera_id, bread_id, name, selection_area)
 
     def _read_video(self, rtsp, tracker, line_counter, camera_id=1, product_id=1, name="notaclassname", selection_area=None):
@@ -50,21 +51,21 @@ class Producer:
             ret, frame = cap.read()
             if selection_area is None:
                 selection_area = [0,0, frame.shape[0], frame.shape[1]]
-
             frame_counter = 0
+            model = YOLO('/model/yolo.pt')
             while True:
                 ret, frame = cap.read()
                 frame_counter+=1
                 if not ret:
                     break
-                tracker, count = process_data(frame, tracker, line_counter, camera_id, name, selection_area)
+                tracker, line_counter = process_data(frame, model, tracker, line_counter, camera_id, name, selection_area)
                 if frame_counter % 5 == 0:
 
                     data = {
                         "camera_id": camera_id,
                         "product_id": product_id,
                         "name": name,
-                        "count": count,
+                        "count":line_counter.out_count,
                         "timestamp" : time.time()
                     }
                     response = requests.post("http://backend:8543/counting_result/", json=data)
