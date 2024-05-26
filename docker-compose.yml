@@ -4,13 +4,13 @@ services:
   backend:
     build: backend
     image: server
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [ gpu ]
     depends_on:
       - db
       - redis
@@ -31,13 +31,13 @@ services:
 
   counter:
       image: server
-      deploy:
-        resources:
-          reservations:
-            devices:
-              - driver: nvidia
-                count: 1
-                capabilities: [ gpu ]
+#      deploy:
+#        resources:
+#          reservations:
+#            devices:
+#              - driver: nvidia
+#                count: 1
+#                capabilities: [ gpu ]
 
       depends_on:
         - db
@@ -56,13 +56,13 @@ services:
 
   frontend:
     build: frontend
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [ gpu ]
     ports:
       - "9033:8501"
     depends_on:
