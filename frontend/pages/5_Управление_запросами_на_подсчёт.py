@@ -135,6 +135,8 @@ try:
         key="canvas_line",
     )
 
+    x1, x2, y1, y2 = 0, frame.shape[0], 0, frame.shape[1]
+    lx1, ly1, lx2, ly2 =0,  frame.shape[1]-50, frame.shape[0], frame.shape[1]-50
     # The data in the canvas (lines, shapes, etc) is in the `canvas_result.json_data` attribute
     if canvas_result_square.json_data is not None and len(canvas_result_square.json_data["objects"])>0:
         # Extract the coordinates of the square
