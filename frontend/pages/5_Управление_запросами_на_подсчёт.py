@@ -37,7 +37,7 @@ if response.status_code == 200:
             if request:
                     new_selection_area = st.text_input('Зона выбора', request['selection_area'])
                     new_counting_line = st.text_input('Линия подсчёта', request['counting_line'])
-                    new_status = st.text_input('Статус (1 - работает, 0 - выключено)', request['status'])
+                    new_status = st.radio('Статус:', [0, 1], format_func=lambda x: 'Работает' if x == 1 else 'Выключена')
                     submit_button = st.form_submit_button(label='Подтвердить')
 
                     if submit_button:
@@ -47,7 +47,7 @@ if response.status_code == 200:
                             'product_id' : request['product_id'],
                             'selection_area': new_selection_area,
                             'counting_line': new_counting_line,
-                            'status' : new_status
+                            'status' : int(new_status)
                         })
                         if response.status_code == 200:
                             st.success('Запрос на подсчёт успешно обновлен.')

@@ -52,7 +52,7 @@ async def startup_event():
     return process_ids
 
 @app.post("/process/")
-def create_process(counting_request: CountingRequest, db: Session = Depends(get_db)):
+def create_process(counting_request, db: Session = Depends(get_db)):
     video_source = (counting_request.id,
     db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
     counting_request.camera_id,
@@ -79,7 +79,10 @@ def get_process(request_id: int):
 
 @app.delete("/process/{request_id}")
 def delete_process(request_id: int):
-    process_id = process_ids[request_id]
+    try:
+        process_id = process_ids[request_id]
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Process not found")
     for process in processes:
         if process.pid == process_id:
             process.kill()

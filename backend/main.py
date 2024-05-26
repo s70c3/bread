@@ -163,7 +163,7 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
     # Get all streams from the CountRequest table
     if counting_request.status == 0:
         return {"message": "Запрос на подсчёт  создан, но не активен"}
-
+    print(counting_request)
     # Запуск чтения видео и отправки кадров на обработку
     response = requests.post('http://counter:8544/process/', counting_request)
 
@@ -175,22 +175,22 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
 @app.put("/count/{request_id}")
 def update_counting_request(request_id: int, counting_request: CountingRequest, db: Session = Depends(get_db)):
     db_counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.id == request_id).first()
-
     if db_counting_request:
-        response = requests.delete(f'http://counter:8544/process/{request_id}')
+
+        if db_counting_request.status == 1:
+            response = requests.delete(f'http://counter:8544/process/{request_id}')
         if counting_request.status == 1:
             response = requests.post('http://counter:8544/process/', json={
-                ''
+                'request_id' : request_id,
                 'selection_area': counting_request.selection_area,
                 'counting_line': counting_request.counting_line,
                 'camera_id': counting_request.product_id,
                 'product_id': counting_request.camera_id,
                 'status': counting_request.status
             })
-
-        for var, value in vars(counting_request).items():
-            setattr(db_counting_request, var, value) if value else None
-        db.commit()
+            for var, value in vars(counting_request).items():
+                setattr(db_counting_request, var, value) if value is not None else None
+            db.commit()
         return {"message": "Counting request updated successfully"}
 
     raise HTTPException(status_code=404, detail="Counting request not found")
@@ -224,23 +224,17 @@ def get_counting_request(request_id: int, db: Session = Depends(get_db)):
         'status' : counting_request.status
     }
 
-
-# Подсчет изделий
-@app.get("/bread/count/{product_id}")
-def count_product(product_id: int, db: Session = Depends(get_db)):
-    # Здесь будет логика для подсчета количества изделий
-    return {"product_id": product_id, "count": 100}  # Пример ответа, пока без реальной логики
-
-
 # Просмотр количества изделий за период времени
 @app.get("/bread/count/{product_id}/period/{start_date}/{end_date}")
 def count_product_period(product_id: int, start_date: str, end_date: str, db: Session = Depends(get_db)):
     start_date = datetime.fromisoformat(start_date)
     end_date = datetime.fromisoformat(end_date)
 
-    count_result = db.query(func.sum(models.CountingResult.count)). \
+    count_result = db.query(func.max(models.CountingResult.count)). \
         filter(models.CountingResult.product_id == product_id). \
-        filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar()
+        filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar() - db.query(func.min(models.CountingResult.count)). \
+            filter(models.CountingResult.product_id == product_id). \
+            filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar()
     return {"product_id": product_id, "start_date": start_date, "end_date": end_date, "count": count_result}
 
 
