@@ -236,13 +236,14 @@ def get_counting_request(request_id: int, db: Session = Depends(get_db)):
 def count_product_period(product_id: int, start_date: str, end_date: str, db: Session = Depends(get_db)):
     start_date = datetime.fromisoformat(start_date)
     end_date = datetime.fromisoformat(end_date)
-
-    count_result = db.query(func.max(models.CountingResult.count)). \
+    start_count = db.query(func.max(models.CountingResult.count)). \
                        filter(models.CountingResult.product_id == product_id). \
-                       filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar() - db.query(
+                       filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar() or 0
+    end_count = - db.query(
         func.min(models.CountingResult.count)). \
                        filter(models.CountingResult.product_id == product_id). \
-                       filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar()
+                       filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar() or 0
+    count_result = start_count - end_count
     return {"product_id": product_id, "start_date": start_date, "end_date": end_date, "count": count_result}
 
 
