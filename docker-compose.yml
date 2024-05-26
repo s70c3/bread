@@ -3,6 +3,7 @@ version: '3'
 services:
   backend:
     build: backend
+    image: server
     deploy:
       resources:
         reservations:
@@ -16,6 +17,7 @@ services:
     volumes:
       - ./:/code:ro
       - ./model:/model:ro
+      - ./video:/video:ro
     environment:
       - DATABASE_URL=postgresql://postgres:bread@db:5432/bread
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -23,8 +25,34 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
     ports:
       - "8543:8543"
+    command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8543"]
     container_name: backend
 
+
+  counter:
+      image: server
+  #    deploy:
+  #      resources:
+  #        reservations:
+  #          devices:
+  #            - driver: nvidia
+  #              count: 1
+  #              capabilities: [ gpu ]
+
+      depends_on:
+        - db
+      volumes:
+        - ./:/code:ro
+        - ./model:/model:ro
+        - ./video:/video:ro
+      environment:
+        - DATABASE_URL=postgresql://postgres:bread@db:5432/bread
+        - NVIDIA_VISIBLE_DEVICES=all
+      ports:
+        - "8544:8544"
+      container_name: counter
+
+      command: ["uvicorn", "counter.main:app", "--host", "0.0.0.0", "--port", "8544"]
 
   frontend:
     build: frontend
@@ -42,6 +70,7 @@ services:
     volumes:
       - ./frontend:/app
       - ./model:/model:ro
+      - ./video:/video:ro
     restart: always
     container_name: frontend
     environment:
@@ -61,7 +90,7 @@ services:
       - POSTGRES_DB=bread
 
   worker1:
-    build: backend
+    image: server
     deploy:
       resources:
         reservations:
@@ -88,7 +117,7 @@ services:
     image: redis:7
 
   dashboard:
-    build: backend
+    image: server
     command: celery --broker=redis://redis:6379/0 flower --port=5555
     ports:
       - 5556:5555
