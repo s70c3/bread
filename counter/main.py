@@ -48,12 +48,12 @@ async def startup_event():
         process = mp.Process(target=producer.start)
         process.start()
         processes.append(process)
-        process_ids[int(video_source[0])]=process.pid
+        process_ids[str(video_source[0])]=process.pid
     return process_ids
 
-@app.post("/process/")
-def create_process(counting_request, db: Session = Depends(get_db)):
-    video_source = (counting_request.id,
+@app.post("/process/{request_id}")
+def create_process(request_id, counting_request : CountingRequest, db: Session = Depends(get_db)):
+    video_source = (request_id,
     db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
     counting_request.camera_id,
     counting_request.product_id,
@@ -66,7 +66,7 @@ def create_process(counting_request, db: Session = Depends(get_db)):
     process = mp.Process(target=producer.start)
     process.start()
     processes.append(process)
-    process_ids[video_source[0]]=process.pid
+    process_ids[str(video_source[0])]=process.pid
     return process_ids
 
 @app.get("/process/{request_id}")
@@ -80,14 +80,14 @@ def get_process(request_id: int):
 @app.delete("/process/{request_id}")
 def delete_process(request_id: int):
     try:
-        process_id = process_ids[request_id]
+        process_id = process_ids[str(request_id)]
     except KeyError:
         raise HTTPException(status_code=404, detail="Process not found")
     for process in processes:
         if process.pid == process_id:
             process.kill()
             processes.remove(process)
-            process_ids.pop(request_id)
+            process_ids.pop(str(request_id))
             return {"message": "Process killed successfully"}
     raise HTTPException(status_code=404, detail="Process not found")
 

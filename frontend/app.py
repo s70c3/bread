@@ -16,16 +16,3 @@ import streamlit as st
 
 # Main page heading
 st.title("Запросы на подсчёт")
-
-# Make a GET request to the /count/ endpoint
-response = requests.get("http://backend:8543/count/")
-
-# Check if the request was successful
-if response.status_code == 200:
-    # Get the counting requests from the response
-    counting_requests = response.json()
-
-    # Display the counting requests in a table
-    st.table(counting_requests)
-else:
-    st.error("Не удалось получить текущие подключения.")

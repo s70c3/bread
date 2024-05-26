@@ -10,7 +10,6 @@ from data_models.api_models import *
 
 app = FastAPI()
 
-
 from data_models.db_models import SessionLocal
 from backend.autolabel.worker import label_data
 
@@ -88,6 +87,7 @@ def update_product(product_id: int, product: BreadProduct, db: Session = Depends
         return {"message": "Продукт успешно обновлен."}
     raise HTTPException(status_code=404, detail="Продукт не найден.")
 
+
 # Просмотр списка всех изделий
 @app.get("/bread/")
 def get_breads(db: Session = Depends(get_db)):
@@ -104,7 +104,6 @@ def delete_bread(bread_id: int, db: Session = Depends(get_db)):
         db.commit()
         return {"message": "Bread product deleted successfully"}
     raise HTTPException(status_code=404, detail="Bread product not found")
-
 
 
 # Создание нового изделия
@@ -128,21 +127,20 @@ def create_counting_result(counting_result: CountingResult, db: Session = Depend
     return db_counting_result
 
 
-
-
-
 # Просмотр списка всех изделий
 
 @app.get("/count/")
 def counting_requests_info(db: Session = Depends(get_db)):
     streams = [
         {
-            'id':dataset.id,
-            'rtsp_stream': db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
-            'camera_id' : dataset.camera_id,
-            'product_id' : dataset.product_id,
+            'id': dataset.id,
+            'rtsp_stream': db.query(models.Camera).filter(
+                models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
+            'camera_id': dataset.camera_id,
+            'product_id': dataset.product_id,
             'camera_name': db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().name,
-            'product_name': db.query(models.BreadProduct).filter(models.BreadProduct.product_id == dataset.product_id).first().name,
+            'product_name': db.query(models.BreadProduct).filter(
+                models.BreadProduct.product_id == dataset.product_id).first().name,
             'selection_area': dataset.selection_area,
             'counting_line': dataset.counting_line,
             'status': dataset.status
@@ -160,13 +158,19 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
     new_request = models.CountingRequest(**counting_request.dict())
     db.add(new_request)
     db.commit()
+    id = db.query(models.CountingRequest).filter(models.CountingRequest.product_id == counting_request.product_id and models.CountingRequest.camera_id == counting_request.camera_id).first()
     # Get all streams from the CountRequest table
     if counting_request.status == 0:
         return {"message": "Запрос на подсчёт  создан, но не активен"}
     print(counting_request)
     # Запуск чтения видео и отправки кадров на обработку
-    response = requests.post('http://counter:8544/process/', counting_request)
-
+    response = requests.post(f"http://counter:8544/process/{id}",
+               json={'selection_area': counting_request.selection_area,
+                'counting_line': counting_request.counting_line,
+                'camera_id': counting_request.camera_id,
+                'product_id': counting_request.product_id,
+                'status': counting_request.status
+            })
 
     return response
 
@@ -175,25 +179,26 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
 @app.put("/count/{request_id}")
 def update_counting_request(request_id: int, counting_request: CountingRequest, db: Session = Depends(get_db)):
     db_counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.id == request_id).first()
+    pre_status = db_counting_request.status
     if db_counting_request:
-
-        if db_counting_request.status == 1:
+        for var, value in vars(counting_request).items():
+            setattr(db_counting_request, var, value) if value is not None else None
+        db.commit()
+        print(pre_status)
+        if pre_status == 1:
             response = requests.delete(f'http://counter:8544/process/{request_id}')
         if counting_request.status == 1:
-            response = requests.post('http://counter:8544/process/', json={
-                'request_id' : request_id,
+            response = requests.post(f'http://counter:8544/process/{request_id}', json={
                 'selection_area': counting_request.selection_area,
                 'counting_line': counting_request.counting_line,
-                'camera_id': counting_request.product_id,
-                'product_id': counting_request.camera_id,
+                'camera_id': counting_request.camera_id,
+                'product_id': counting_request.product_id,
                 'status': counting_request.status
             })
-            for var, value in vars(counting_request).items():
-                setattr(db_counting_request, var, value) if value is not None else None
-            db.commit()
         return {"message": "Counting request updated successfully"}
 
     raise HTTPException(status_code=404, detail="Counting request not found")
+
 
 # Delete a counting request
 @app.delete("/count/{request_id}")
@@ -205,6 +210,7 @@ def delete_counting_request(request_id: int, db: Session = Depends(get_db)):
         db.commit()
         return {"message": "Counting request deleted successfully"}
     raise HTTPException(status_code=404, detail="Counting request not found")
+
 
 @app.get("/counting_request/{request_id}")
 def get_counting_request(request_id: int, db: Session = Depends(get_db)):
@@ -221,8 +227,9 @@ def get_counting_request(request_id: int, db: Session = Depends(get_db)):
         'camera_rtsp': camera.rtsp_stream,
         'product_id': product.product_id,
         'product_name': product.name,
-        'status' : counting_request.status
+        'status': counting_request.status
     }
+
 
 # Просмотр количества изделий за период времени
 @app.get("/bread/count/{product_id}/period/{start_date}/{end_date}")
@@ -231,10 +238,11 @@ def count_product_period(product_id: int, start_date: str, end_date: str, db: Se
     end_date = datetime.fromisoformat(end_date)
 
     count_result = db.query(func.max(models.CountingResult.count)). \
-        filter(models.CountingResult.product_id == product_id). \
-        filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar() - db.query(func.min(models.CountingResult.count)). \
-            filter(models.CountingResult.product_id == product_id). \
-            filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar()
+                       filter(models.CountingResult.product_id == product_id). \
+                       filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar() - db.query(
+        func.min(models.CountingResult.count)). \
+                       filter(models.CountingResult.product_id == product_id). \
+                       filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar()
     return {"product_id": product_id, "start_date": start_date, "end_date": end_date, "count": count_result}
 
 
