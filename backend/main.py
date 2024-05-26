@@ -239,7 +239,7 @@ def count_product_period(product_id: int, start_date: str, end_date: str, db: Se
     start_count = db.query(func.max(models.CountingResult.count)). \
                        filter(models.CountingResult.product_id == product_id). \
                        filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar() or 0
-    end_count = - db.query(
+    end_count = db.query(
         func.min(models.CountingResult.count)). \
                        filter(models.CountingResult.product_id == product_id). \
                        filter(models.CountingResult.timestamp.between(start_date, end_date)).scalar() or 0
