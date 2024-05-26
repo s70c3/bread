@@ -11,7 +11,7 @@ st.header("Запрос на подсчёт хлебобулочных изде�
 st.subheader("Активные запросы на подсчёт")
 
 # Make a GET request to the /count/ endpoint
-response = requests.get("http://backend:8543/count_info/")
+response = requests.get("http://backend:8543/count/")
 
 # Check if the request was successful
 if response.status_code == 200:

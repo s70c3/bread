@@ -1,3 +1,4 @@
+import requests
 from fastapi import FastAPI, HTTPException, Depends
 
 from sqlalchemy import func
@@ -132,15 +133,10 @@ def stop_counting(db: Session = Depends(get_db)):
     p
 
 
-@app.get("/count/")
-def start_counting(db: Session = Depends(get_db)):
-
-    return streams
-
 
 # Просмотр списка всех изделий
 
-@app.get("/count_info/")
+@app.get("/count/")
 def counting_requests_info(db: Session = Depends(get_db)):
     streams = [
         {
@@ -171,18 +167,16 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
     if counting_request.status == 0:
         return {"message": "Counting request added, but is not active"}
     # Создание экземпляра класса Producer
-    producer.add_stream(
-        (db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
-         counting_request.camera_id,
-         counting_request.product_id,
-         db.query(models.BreadProduct).filter(
-             models.BreadProduct.product_id == counting_request.product_id).first().name,
-         counting_request.selection_area,
-         counting_request.counting_line,
-         counting_request.status))
+    response = requests.post('http://counter:8544/process/', json={
+        'selection_area': counting_request.selection_area,
+        'counting_line': counting_request.counting_line,
+        'camera_id': counting_request.product_id,
+        'product_id': counting_request.camera_id,
+        'status': counting_request.status
+    })
     # Запуск чтения видео и отправки кадров на обработку
 
-    return {"message": "Counting started for all streams"}
+    return response
 
 
 # Update a counting request

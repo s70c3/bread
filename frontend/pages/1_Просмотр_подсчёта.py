@@ -28,7 +28,7 @@ import requests
 import streamlit as st
 
 # Fetch the list of counting requests
-response = requests.get('http://backend:8543/count_info/')
+response = requests.get('http://backend:8543/count/')
 if response.status_code == 200:
     counting_requests = response.json()
 else:

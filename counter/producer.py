@@ -18,46 +18,32 @@ class Producer:
         if cls._instance is None:
             cls._instance = super(Producer, cls).__new__(cls)
         return cls._instance
-    def __init__(self, video_sources=None):
-        # mp.set_start_method('spawn', force=True)
-        if video_sources is None:
-            video_sources = []
-        self.video_sources = video_sources
-        self.processes = []
+    def __init__(self, video_source=None):
+        if video_source is None:
+            video_source = ()
+        self.video_source = video_source
         self.is_running = False
 
     def start(self):
         if self.is_running:
-            return "Процессы уже запущены."
+            return "Процесс уже запущен."
 
-        for i, video_source in enumerate(self.video_sources):
-            self.add_stream(video_source)
-
-        for process in self.processes:
-            process.start()
-        for process in self.processes:
-            process.join()
-
-        print("Количество процессов: ",len(self.processes))
+        self.add_stream(*self.video_source)
+        print("Количество процессов: ",len(self.video_source))
         self.is_running = True
 
-    def add_stream(self, video_source):
+    def add_stream(self, rtsp, camera_id, bread_id, name, selection_area, counting_line, status ):
         # create instance of BoxAnnotator and LineCounterAnnotator
-        rtsp, camera_id, bread_id, name, selection_area, counting_line, status = video_source
+
         counting_line = ast.literal_eval(counting_line)
         selection_area = ast.literal_eval(selection_area)
         LINE_START = sv.Point(counting_line[0] - selection_area[1], counting_line[1])
         LINE_END = sv.Point(counting_line[2] - selection_area[1], counting_line[3])
         if status == 0:
             return
-        self.video_sources.append(video_source)
         line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
         tracker = sv.ByteTrack()
-        process = mp.Process(target=self._read_video, args=(rtsp,
-                                                         tracker, line_counter, camera_id, bread_id, name, selection_area))
-
-        self.processes.append(process)
-
+        self._read_video(rtsp, tracker, line_counter, camera_id, bread_id, name, selection_area)
 
     def _read_video(self, rtsp, tracker, line_counter, camera_id=1, product_id=1, name="notaclassname", selection_area=None):
             cap = cv2.VideoCapture(rtsp)
@@ -81,7 +67,7 @@ class Producer:
                         "count": count,
                         "timestamp" : time.time()
                     }
-                    response = requests.post("http://localhost:8543/counting_result/", json=data)
+                    response = requests.post("http://backend:8543/counting_result/", json=data)
                     if response.status_code == 200:
                         print("Data sent successfully")
                     else:
@@ -92,9 +78,5 @@ class Producer:
     def stop(self):
         if not self.is_running:
             return "No processes to stop"
-
-        for process in self.processes:
-            process.terminate()
-        self.processes = []
 
         self.is_running = False
