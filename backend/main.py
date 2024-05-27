@@ -156,15 +156,12 @@ def counting_requests_info(db: Session = Depends(get_db)):
 @app.post("/count/")
 def start_new_counting(counting_request: CountingRequest, db: Session = Depends(get_db)):
 
-    o = counting_request.dict()
-    o['status'] = o['status_request']
-    o.pop('status_request')
     new_request = models.CountingRequest(**o)
     db.add(new_request)
     db.commit()
     id = db.query(models.CountingRequest).filter(models.CountingRequest.product_id == counting_request.product_id and models.CountingRequest.camera_id == counting_request.camera_id).first()
     # Get all streams from the CountRequest table
-    if counting_request.status_request == 0:
+    if counting_request.status == 0:
         return {"message": "Запрос на подсчёт  создан, но не активен"}
     print(counting_request)
     # Запуск чтения видео и отправки кадров на обработку
@@ -173,7 +170,7 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
                 'counting_line': counting_request.counting_line,
                 'camera_id': counting_request.camera_id,
                 'product_id': counting_request.product_id,
-                'status_request': counting_request.status_request
+                'status': counting_request.status
             })
 
     return response
@@ -188,7 +185,6 @@ def update_counting_request(request_id: int, counting_request: CountingRequest, 
         for var, value in vars(counting_request).items():
             setattr(db_counting_request, var, value) if value is not None else None
         db.commit()
-        print(pre_status)
         if pre_status == 1:
             response = requests.delete(f'http://counter:8544/process/{request_id}')
         if counting_request.status == 1:
@@ -197,7 +193,7 @@ def update_counting_request(request_id: int, counting_request: CountingRequest, 
                 'counting_line': counting_request.counting_line,
                 'camera_id': counting_request.camera_id,
                 'product_id': counting_request.product_id,
-                'status_request': counting_request.status_request
+                'status': counting_request.status
             })
         return {"message": "Counting request updated successfully"}
 

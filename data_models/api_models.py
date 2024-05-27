@@ -17,7 +17,7 @@ class CountingRequest(BaseModel):
     product_id: int
     selection_area: Optional[str] = None
     counting_line: Optional[str] = None
-    status_request : int
+    status : int
 
 
 class LabelingRequest(BaseModel):

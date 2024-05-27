@@ -59,7 +59,7 @@ class Producer:
                 if not ret:
                     break
                 tracker, line_counter = process_data(frame, model, tracker, line_counter, camera_id, name, selection_area)
-                if frame_counter % 5 == 0:
+                if frame_counter % 20 == 0:
 
                     data = {
                         "camera_id": camera_id,
