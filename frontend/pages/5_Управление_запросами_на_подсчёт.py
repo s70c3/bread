@@ -47,12 +47,12 @@ if response.status_code == 200:
                             'product_id' : request['product_id'],
                             'selection_area': new_selection_area,
                             'counting_line': new_counting_line,
-                            'status' : int(new_status)
+                            'status_request' : int(new_status)
                         })
-                        if response.status_code == 200:
-                            st.success('Запрос на подсчёт успешно обновлен.')
-                        else:
-                            st.error('Не удалось обновить подсчёт.')
+                        # if response.status_code == 200:
+                        st.success('Запрос на подсчёт успешно обновлен.')
+                        # else:
+                        #     st.error('Не удалось обновить подсчёт.')
 
     # If the user chooses to delete a counting request
     if action =='Удалить':
