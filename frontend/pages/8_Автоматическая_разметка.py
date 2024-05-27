@@ -1,8 +1,14 @@
 import streamlit as st
-from streamlit_drawable_canvas import st_canvas
 import cv2
-from PIL import Image
 import requests
+
+
+from pages.utils.password import check_password
+
+if not check_password():
+    st.stop()  # Do not continue if check_password is not True.
+
+
 
 # Fetch the list of cameras
 response = requests.get('http://backend:8543/camera')

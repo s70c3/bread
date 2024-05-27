@@ -4,6 +4,14 @@ import cv2
 from PIL import Image
 import requests
 
+
+from pages.utils.password import check_password
+
+if not check_password():
+    st.stop()  # Do not continue if check_password is not True.
+
+
+
 st.header("Запрос на подсчёт хлебобулочных изделий")
 
 

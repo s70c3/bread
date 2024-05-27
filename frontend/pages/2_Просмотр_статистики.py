@@ -2,6 +2,13 @@ import streamlit as st
 import requests
 from datetime import date, datetime
 
+from pages.utils.password import check_password
+
+
+if not check_password():
+    st.stop()  # Do not continue if check_password is not True.
+
+
 # Fetch the data
 response = requests.get('http://backend:8543/bread/')
 data = response.json()['breads']

@@ -1,15 +1,17 @@
 # Python In-built packages
-from pathlib import Path
-import PIL
-import cv2
 
 # External packages
 import streamlit as st
 
 # Local Modules
 import pages.utils.helper as helper
-import pages.utils.settings as settings
 from ultralytics import YOLO
+
+from pages.utils.password import check_password
+
+if not check_password():
+    st.stop()  # Do not continue if check_password is not True.
+
 
 # Setting page layout
 st.set_page_config(
@@ -26,6 +28,7 @@ st.text("Для отображение подсчёта должен быть с
 
 import requests
 import streamlit as st
+
 
 # Fetch the list of counting requests
 response = requests.get('http://backend:8543/count/')

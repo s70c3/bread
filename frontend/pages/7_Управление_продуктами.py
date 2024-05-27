@@ -4,6 +4,14 @@ import base64
 from PIL import Image
 from io import BytesIO
 
+
+from pages.utils.password import check_password
+
+if not check_password():
+    st.stop()  # Do not continue if check_password is not True.
+
+
+
 # Fetch the data
 response = requests.get('http://backend:8543/bread/')
 data = response.json()['breads']

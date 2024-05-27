@@ -1,18 +1,19 @@
-# Contents of ~/my_app/main_page.py
 import streamlit as st
-# Setting page layout
-st.set_page_config(
-    page_title="Запросы на подсчёт",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+from pages.utils.password import check_password
 
-# Python In-built packages
-import requests
+def render_sidebar():
+    """Render the sidebar only if the password is correct."""
+    if st.session_state.get("password_correct", False):
+        # Add your sidebar elements here
+        pass
 
-# External packages
-import streamlit as st
+def render_main_content():
+    """Render the main content only if the password is correct."""
+    if st.session_state.get("password_correct", False):
+        st.write("Добро пожаловать в систему подсчёта хлебобулочных изделий")
 
+if not check_password():
+    st.stop()  # Do not continue if check_password is not True.
 
-# Main page heading
-st.title("Запросы на подсчёт")
+render_sidebar()
+render_main_content()
