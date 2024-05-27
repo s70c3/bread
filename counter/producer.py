@@ -70,7 +70,7 @@ class Producer:
                     }
                     response = requests.post("http://backend:8543/counting_result/", json=data)
                     if response.status_code == 200:
-                        print("Data sent successfully")
+                        print("Data sent successfully: "+ str(camera_id) + " " + str(product_id) + " " +str(line_counter.out_count))
                     else:
                         print("Failed to send data")
 
