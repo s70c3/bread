@@ -161,7 +161,7 @@ try:
             'counting_line': str([lx1, ly1, lx2, ly2]),
             'camera_id': camera_ids[source_radio],
             'product_id': breads[bread_select],
-            'status_request': 1
+            'status': 1
         })
         # if response.status_code == 200:
         st.write('Запрос на подсчёт отправлен успешно.')
@@ -176,7 +176,7 @@ except cv2.error:
             'counting_line': str([0, 300, 3000, 300]),
             'camera_id': camera_ids[source_radio],
             'product_id': breads[bread_select],
-            'status_request': 0
+            'status': 0
         })
         # if response.status_code == 200:
         st.write('Запрос на подсчёт отправлен успешно.')
