@@ -197,7 +197,7 @@ def update_counting_request(request_id: int, counting_request: CountingRequest, 
                 'counting_line': counting_request.counting_line,
                 'camera_id': counting_request.camera_id,
                 'product_id': counting_request.product_id,
-                'status': counting_request.status
+                'status_request': counting_request.status_request
             })
         return {"message": "Counting request updated successfully"}
 
