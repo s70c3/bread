@@ -47,7 +47,7 @@ if response.status_code == 200:
                             'product_id' : request['product_id'],
                             'selection_area': new_selection_area,
                             'counting_line': new_counting_line,
-                            'status_request' : int(new_status)
+                            'status' : int(new_status)
                         })
                         # if response.status_code == 200:
                         st.success('Запрос на подсчёт успешно обновлен.')
