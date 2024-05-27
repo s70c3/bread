@@ -61,7 +61,7 @@ def create_process(request_id, counting_request : CountingRequest, db: Session =
         models.BreadProduct.product_id == counting_request.product_id).first().name,
     counting_request.selection_area,
     counting_request.counting_line,
-    counting_request.status)
+    counting_request.status_request)
     producer = Producer(video_source[1:])
     process = mp.Process(target=producer.start)
     process.start()

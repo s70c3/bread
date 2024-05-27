@@ -161,14 +161,14 @@ try:
             'counting_line': str([lx1, ly1, lx2, ly2]),
             'camera_id': camera_ids[source_radio],
             'product_id': breads[bread_select],
-            'status' : 1
+            'status_request': 1
         })
-        if response.status_code == 200:
-            st.write('Запрос на подсчёт отправлен успешно.')
-        else:
-            st.write('Не удалось отправить данные.')
+        # if response.status_code == 200:
+        st.write('Запрос на подсчёт отправлен успешно.')
+        # else:
+            # st.write('Не удалось отправить данные.')
 
-            st.write(response.text)
+            # st.write(response.text)
 except cv2.error:
     if st.button('Подтвердить'):
         response = requests.post('http://backend:8543/count/', json={
@@ -176,10 +176,10 @@ except cv2.error:
             'counting_line': str([0, 300, 3000, 300]),
             'camera_id': camera_ids[source_radio],
             'product_id': breads[bread_select],
-            'status' : 0
+            'status_request': 0
         })
-        if response.status_code == 200:
-            st.write('Запрос на подсчёт отправлен успешно.')
-        else:
-            st.write('Не удалось отправить данные.')
+        # if response.status_code == 200:
+        st.write('Запрос на подсчёт отправлен успешно.')
+        # else:
+            # st.write('Не удалось отправить данные.')
     st.error("Нет подключения к потоку. Запрос можно отправить без указания области.")
