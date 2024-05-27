@@ -29,7 +29,6 @@ class Producer:
             return "Процесс уже запущен."
 
         self.add_stream(*self.video_source)
-        print("Количество процессов: ",len(self.video_source))
         self.is_running = True
 
     def add_stream(self, rtsp, camera_id, bread_id, name, selection_area, counting_line, status ):
@@ -56,24 +55,26 @@ class Producer:
             while True:
                 ret, frame = cap.read()
                 frame_counter+=1
-                if not ret:
-                    break
-                tracker, line_counter = process_data(frame, model, tracker, line_counter, camera_id, name, selection_area)
-                if frame_counter % 20 == 0:
+                try:
+                # if not ret:
+                #     break
+                    tracker, line_counter = process_data(frame, model, tracker, line_counter, camera_id, name, selection_area)
+                    if frame_counter % 20 == 0:
 
-                    data = {
-                        "camera_id": camera_id,
-                        "product_id": product_id,
-                        "name": name,
-                        "count":line_counter.out_count,
-                        "timestamp" : time.time()
-                    }
-                    response = requests.post("http://backend:8543/counting_result/", json=data)
-                    if response.status_code == 200:
-                        print("Data sent successfully: "+ str(camera_id) + " " + str(product_id) + " " +str(line_counter.out_count))
-                    else:
-                        print("Failed to send data")
-
+                        data = {
+                            "camera_id": camera_id,
+                            "product_id": product_id,
+                            "name": name,
+                            "count":line_counter.out_count,
+                            "timestamp" : time.time()
+                        }
+                        response = requests.post("http://backend:8543/counting_result/", json=data)
+                        if response.status_code == 200:
+                            print("Data sent successfully: "+ str(camera_id) + " " + str(product_id) + " " +str(line_counter.out_count))
+                        else:
+                            print("Failed to send data")
+                except Exception as e:
+                    pass
             cap.release()
 
     def stop(self):
