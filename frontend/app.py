@@ -1,5 +1,6 @@
 import streamlit as st
 from pages.utils.password import check_password
+st.markdown("# Главная страница")
 
 def render_sidebar():
     """Render the sidebar only if the password is correct."""

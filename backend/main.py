@@ -156,14 +156,13 @@ def counting_requests_info(db: Session = Depends(get_db)):
 @app.post("/count/")
 def start_new_counting(counting_request: CountingRequest, db: Session = Depends(get_db)):
 
-    new_request = models.CountingRequest(**o)
+    new_request = models.CountingRequest(**counting_request.dict())
     db.add(new_request)
     db.commit()
     id = db.query(models.CountingRequest).filter(models.CountingRequest.product_id == counting_request.product_id and models.CountingRequest.camera_id == counting_request.camera_id).first()
     # Get all streams from the CountRequest table
     if counting_request.status == 0:
         return {"message": "Запрос на подсчёт  создан, но не активен"}
-    print(counting_request)
     # Запуск чтения видео и отправки кадров на обработку
     response = requests.post(f"http://counter:8544/process/{id}",
                json={'selection_area': counting_request.selection_area,
