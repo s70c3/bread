@@ -53,8 +53,7 @@ async def startup_event():
 
 @app.post("/process/{request_id}")
 def create_process(request_id, counting_request : CountingRequest, db: Session = Depends(get_db)):
-    video_source = (request_id,
-    db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
+    video_source = (db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
     counting_request.camera_id,
     counting_request.product_id,
     db.query(models.BreadProduct).filter(
@@ -62,11 +61,12 @@ def create_process(request_id, counting_request : CountingRequest, db: Session =
     counting_request.selection_area,
     counting_request.counting_line,
     counting_request.status)
-    producer = Producer(video_source[1:])
+
+    producer = Producer(video_source)
     process = mp.Process(target=producer.start)
     process.start()
     processes.append(process)
-    process_ids[str(video_source[0])]=process.pid
+    process_ids[str(request_id)]=process.pid
     return process_ids
 
 @app.get("/process/{request_id}")

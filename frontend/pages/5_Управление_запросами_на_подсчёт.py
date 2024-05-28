@@ -11,7 +11,6 @@ if not check_password():
     st.stop()  # Do not continue if check_password is not True.
 
 
-
 st.header("Запрос на подсчёт хлебобулочных изделий")
 
 
@@ -79,8 +78,8 @@ else:
 # Main page heading
 st.subheader("Создание запроса на подсчёт")
 
-st.text("Для запроса необходимо выбрать соответствующие камеру и изделие.")
-st.text("Добавьте камеру в на странице 'Управление камерами', а продукт на странице 'Управление продуктами'.")
+st.text("Для запроса необходимо выбрать соответствующую камеру.")
+
 # Fetch the list of cameras
 response = requests.get('http://backend:8543/camera')
 if response.status_code == 200:
@@ -88,19 +87,10 @@ if response.status_code == 200:
     sources = {camera['name']: camera['rtsp_stream'] for camera in sources_raw['cameras']}
     camera_ids = {camera['name']: camera['camera_id'] for camera in sources_raw['cameras']}
 else:
-    print('Не получается получить список камер. Проверьте доступ к серверу.')
-
-# Fetch the list of bread products
-response = requests.get('http://backend:8543/bread/')
-if response.status_code == 200:
-    breads = response.json()
-    breads = {bread['name']: bread['product_id'] for bread in breads['breads']}
-else:
-    print('Не получается получить список хлебобулочных изделий. Проверьте доступ к серверу.')
+    st.text("Добавьте камеру в на странице 'Управление камерами'.")
 
 # Let the user select a camera and a bread product
 source_radio = st.radio("Выберите камеру", sources.keys())
-bread_select = st.selectbox('Выберите хлебобулочное изделие', list(breads.keys()))
 
 stream_address= str(sources.get(source_radio))
 try:
@@ -113,7 +103,6 @@ try:
     # Convert the frame to RGB
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame = cv2.resize(frame, (720, int(720*(9/16))))
-
 
     # Create a drawable canvas with the frame as the background for drawing the square
     st.markdown("## Выделите область, окружающую конвейер.")
@@ -143,9 +132,11 @@ try:
         key="canvas_line",
     )
 
+    #Coordinates by default
     x1, x2, y1, y2 = 0, frame.shape[0], 0, frame.shape[1]
     lx1, ly1, lx2, ly2 =0,  frame.shape[1]-50, frame.shape[0], frame.shape[1]-50
     # The data in the canvas (lines, shapes, etc) is in the `canvas_result.json_data` attribute
+    #Bounding box
     if canvas_result_square.json_data is not None and len(canvas_result_square.json_data["objects"])>0:
         # Extract the coordinates of the square
         x1 = canvas_result_square.json_data["objects"][0]["left"]
@@ -153,7 +144,7 @@ try:
         y1 = canvas_result_square.json_data["objects"][0]["top"]
         y2 = y1 + canvas_result_square.json_data["objects"][0]["height"]
         st.write("Координаты ограничивающей области:", x1, y1, x2, y2)
-
+    #Counter line
     if canvas_result_line.json_data is not None and len(canvas_result_line.json_data["objects"])>0:
         # Extract the coordinates of the line
         lx1 = canvas_result_line.json_data["objects"][0]["left"] - canvas_result_line.json_data["objects"][0]["width"]//2
@@ -168,22 +159,19 @@ try:
             'selection_area': str([x1, y1, x2, y2]),
             'counting_line': str([lx1, ly1, lx2, ly2]),
             'camera_id': camera_ids[source_radio],
-            'product_id': breads[bread_select],
             'status': 1
         })
-        # if response.status_code == 200:
-        st.write('Запрос на подсчёт отправлен успешно.')
-        # else:
-            # st.write('Не удалось отправить данные.')
-
-            # st.write(response.text)
+        if response.status_code == 200:
+            st.write('Запрос на подсчёт отправлен успешно.')
+        else:
+            st.error('Не удалось отправить данные.')
+            st.write(response.text)
 except cv2.error:
     if st.button('Подтвердить'):
         response = requests.post('http://backend:8543/count/', json={
-            'selection_area': str([0, 0, 3000, 3000]),
-            'counting_line': str([0, 300, 3000, 300]),
+            'selection_area': None,
+            'counting_line': None,
             'camera_id': camera_ids[source_radio],
-            'product_id': breads[bread_select],
             'status': 0
         })
         # if response.status_code == 200:
