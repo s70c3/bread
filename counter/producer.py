@@ -77,16 +77,18 @@ class Producer:
                                                                                   selection_area,
                                                                                  current_class, zero_frames)
                 if frame_counter % 20 == 0 or need_to_store:
+
                     if need_to_store:
-                        current_class = need_to_store[0]
+                        current_class_save = need_to_store[0]
                         count_value = need_to_store[1]
                     else:
+                        current_class_save = current_class
                         count_value = line_counter.out_count
 
-                    if current_class == "empty":
+                    if current_class_save == "empty":
                         product_id = -1
                     else:
-                        product_id =  mapping[current_class] if mapping else current_class
+                        product_id =  mapping[current_class_save] if mapping else current_class_save
 
                     data = {
                         "request_id": request_id,
@@ -96,7 +98,7 @@ class Producer:
                     }
                     response = requests.post("http://backend:8543/counting_result/", json=data)
                     if response.status_code == 200:
-                        print("Data sent successfully: "+ str(request_id) + " " + str(mapping[current_class]) + " " +str(line_counter.out_count))
+                        print("Data sent successfully: "+ str(request_id) + " " + str(product_id) + " " +str(count_value))
                     else:
                         print("Failed to send data")
                         print(response.text)

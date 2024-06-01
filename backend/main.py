@@ -81,6 +81,8 @@ def create_dataset(dataset: LabelingRequest, db: Session = Depends(get_db)):
 
 @app.post("/counting_result/")
 def create_counting_result(counting_result: CountingResult, db: Session = Depends(get_db)):
+    if counting_result.product_id == -1:
+        counting_result.product_id = None
     db_counting_result = models.CountingResult(**counting_result.dict())
     db.add(db_counting_result)
     db.commit()

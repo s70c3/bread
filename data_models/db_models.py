@@ -47,7 +47,7 @@ class CountingResult(Base):
 
     result_id = Column(Integer, primary_key=True)
     request_id = Column(Integer, ForeignKey('counting_requests.request_id'), nullable=False)
-    product_id = Column(Integer, ForeignKey('bread_products.product_id'), nullable=False)
+    product_id = Column(Integer, ForeignKey('bread_products.product_id'), nullable=True)
     timestamp = Column(DateTime, nullable=False)
     count = Column(Integer, nullable=False)
 
