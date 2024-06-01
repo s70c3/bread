@@ -23,6 +23,9 @@ def get_db():
         db.close()
 
 
+@app.get("/")
+def get_main():
+    return {"message": "Welcome to the Bread Counter API"}
 # Просмотр списка всех изделий
 @app.get("/bread/")
 def get_breads(db: Session = Depends(get_db)):
@@ -142,15 +145,19 @@ def update_counting_request(request_id: int, counting_request: CountingRequest, 
         if counting_request.status == 1:
             response = requests.post(f'http://counter:8544/process/{request_id}', json={
                 'rtsp_stream': counting_request.rtsp_stream,
+                'name' : counting_request.name,
+                'description' : counting_request.description,
                 'selection_area': counting_request.selection_area,
                 'counting_line': counting_request.counting_line,
                 'status': counting_request.status
             })
             if response.status_code == 200:
                 return {"message": "Counting request updated successfully"}
+            else:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
 
 
-    raise HTTPException(status_code=404, detail="Counting request not found")
+
 
 
 # Delete a counting request
@@ -195,15 +202,3 @@ def count_product_period(camera_id: int, start_date: str, end_date: str, db: Ses
     count_result = start_count - end_count
     return {"camera_id": camera_id, "start_date": start_date, "end_date": end_date, "count": count_result}
 
-
-# Просмотр статистики по конкретному конвейеру (камере)
-@app.get("/camera/{camera_id}/period/")
-def count_product_period_camera(camera_id: int, start_date: datetime, end_date: datetime,
-                                db: Session = Depends(get_db)):
-    results = db.query(models.CountingResult.product_id, func.sum(models.CountingResult.count)). \
-        filter(models.CountingResult.camera_id == camera_id). \
-        filter(models.CountingResult.start_period.between(start_date, end_date)). \
-        group_by(models.CountingResult.product_id).all()
-
-    statistics = [{"product_id": product_id, "count": count} for product_id, count in results]
-    return {"camera_id": camera_id, "start_date": start_date, "end_date": end_date, "statistics": statistics}

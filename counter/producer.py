@@ -20,31 +20,29 @@ class Producer:
         return cls._instance
     def __init__(self, video_source=None):
         if video_source is None:
-            video_source = ()
-        self.video_source = video_source
+            self.video_source = ()
+        else:
+            self.video_source = video_source
         self.is_running = False
 
     def start(self):
         if self.is_running:
             return "Процесс уже запущен."
-
-        self.add_stream(*self.video_source)
         self.is_running = True
+        self.add_stream(*self.video_source)
+
 
     def add_stream(self,  rtsp, request_id, selection_area, counting_line, status):
         # create instance of BoxAnnotator and LineCounterAnnotator
         mapping = dict()
-        try:
-            response = requests.get('http://backend:8543/bread/')
-            breads = response.json()['breads']
-            if len(breads)>0:
-                for product in breads:
-                    mapping[product['name']] = product['id']
-            else:
-                mapping=None
-        except Exception as e:
-            print("Невозможно получить список продуктов. Записи в базе будут требовать корректировки.")
-            print(e)
+        # try:
+        response = requests.get('http://backend:8543/bread/')
+        breads = response.json()['breads']
+        if len(breads)>0:
+            for product in breads:
+                mapping[product['name']] = product['product_id']
+        else:
+            mapping=None
         counting_line = ast.literal_eval(counting_line)
         selection_area = ast.literal_eval(selection_area)
         LINE_START = sv.Point(counting_line[0] - selection_area[1], counting_line[1])
@@ -60,14 +58,12 @@ class Producer:
             cap = cv2.VideoCapture(rtsp)
             ret, frame = cap.read()
 
-
             if selection_area is None:
                 selection_area = [0,0, frame.shape[0], frame.shape[1]]
             frame_counter = 0
             model = YOLO('/model/yolo.pt')
             zero_frames = 0
             current_class = "empty"
-
             while self.is_running:
                 ret, frame = cap.read()
                 if not ret:
@@ -82,16 +78,24 @@ class Producer:
                                                                                  current_class, zero_frames)
                 if frame_counter % 20 == 0 or need_to_store:
                     if need_to_store:
+                        if current_class == "empty":
+                            product_id = -1
+                        else:
+                            product_id = mapping[need_to_store[0]] if mapping else need_to_store[0]
                         data = {
                             "request_id": request_id,
-                            "product_id" : mapping[need_to_store[0]] if mapping else  need_to_store[0],
+                            "product_id" : product_id,
                             "count": need_to_store[1],
                             "timestamp": time.time()
                         }
                     else:
+                        if current_class == "empty":
+                            product_id = -1
+                        else:
+                            product_id =  mapping[current_class] if mapping else current_class
                         data = {
                             "request_id": request_id,
-                            "class_name": mapping[current_class] if mapping else current_class,
+                            "class_name": product_id,
                             "count": line_counter.out_count,
                             "timestamp" : time.time()
                         }
@@ -106,5 +110,5 @@ class Producer:
     def stop(self):
         if not self.is_running:
             return "No processes to stop"
-
+        print("Stopping process")
         self.is_running = False
