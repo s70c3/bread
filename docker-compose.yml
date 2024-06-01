@@ -2,15 +2,15 @@ version: '3'
 
 services:
   backend:
-    build: backend
+    build: bread-backend
     image: server
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [ gpu ]
     depends_on:
       - db
       - redis
@@ -26,21 +26,22 @@ services:
     ports:
       - "8543:8543"
     command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8543"]
-    container_name: backend
+    container_name: bread-backend
 
 
   counter:
       image: server
-      deploy:
-        resources:
-          reservations:
-            devices:
-              - driver: nvidia
-                count: 1
-                capabilities: [ gpu ]
+#      deploy:
+#        resources:
+#          reservations:
+#            devices:
+#              - driver: nvidia
+#                count: 1
+#                capabilities: [ gpu ]
 
       depends_on:
         - db
+        - backend
       volumes:
         - ./:/code:ro
         - ./model:/model:ro
@@ -50,19 +51,18 @@ services:
         - NVIDIA_VISIBLE_DEVICES=all
       ports:
         - "8544:8544"
-      container_name: counter
-
       command: ["uvicorn", "counter.main:app", "--host", "0.0.0.0", "--port", "8544"]
+      container_name: bread-counter
 
   frontend:
-    build: frontend
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
+    build: bread-frontend
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [ gpu ]
     ports:
       - "9033:8501"
     depends_on:
@@ -72,7 +72,7 @@ services:
       - ./model:/model:ro
       - ./video:/video:ro
     restart: always
-    container_name: frontend
+    container_name: bread-frontend
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - NVIDIA_VISIBLE_DEVICES=all
@@ -88,16 +88,17 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=bread
       - POSTGRES_DB=bread
+    container_name: bread-db
 
   worker1:
     image: server
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [ gpu ]
     command: celery -A autolabel.worker.celery worker --loglevel=info --hostname=worker1@%h -Q queue1
     volumes:
       - ./backend:/usr/src/app
@@ -110,6 +111,7 @@ services:
     depends_on:
       - backend
       - redis
+    container_name: bread-worker
 
 
 
@@ -128,6 +130,7 @@ services:
       - backend
       - redis
       - worker1
+    container_name: bread-dashboard
 
 volumes:
   postgres_data:

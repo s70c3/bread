@@ -10,7 +10,7 @@ if not check_password():
 
 
 # Fetch the data
-response = requests.get('http://backend:8543/bread/')
+response = requests.get('http://bread-backend:8543/bread/')
 data = response.json()['breads']
 
 # Display the data in a list
@@ -32,7 +32,7 @@ end_datetime = datetime.combine(end_date, end_time)
 # Send a GET request with the selected product ID and date range
 if st.button('Просмотр'):
     response = requests.get(
-        f'http://backend:8543/bread/count/{product_list[product_to_view]}/period/{str(start_datetime.isoformat())}/{str(end_datetime.isoformat())}')
+        f'http://bread-backend:8543/bread/count/{product_list[product_to_view]}/period/{str(start_datetime.isoformat())}/{str(end_datetime.isoformat())}')
     if response.status_code == 200:
         # Fetch the data
         data = response.json()

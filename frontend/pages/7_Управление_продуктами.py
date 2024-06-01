@@ -13,7 +13,7 @@ if not check_password():
 
 
 # Fetch the data
-response = requests.get('http://backend:8543/bread/')
+response = requests.get('http://bread-backend:8543/bread/')
 data = response.json()['breads']
 
 st.header("Управление продуктами")
@@ -41,13 +41,14 @@ if data:
         # Display a form for the user to edit the data
         with st.form(key='edit_form'):
             new_name = st.text_input('Введите новое название', value=data[product_to_edit]['name'])
+            new_labeling_name = st.text_input('Введите название класса разметки', value=data[product_to_edit]['labeling_name'])
             new_photos = st.file_uploader("Загрузите новые фотографии", accept_multiple_files=True)
             new_photos_base64 = [base64.b64encode(photo.read()).decode() for photo in new_photos]
             submit_button = st.form_submit_button(label='Подтвердить')
 
         if submit_button:
             # Send a PUT request with the new data
-            response = requests.put(f'http://backend:8543/bread/{data[product_to_edit]["product_id"]}', json={"name": new_name, "photos": new_photos_base64})
+            response = requests.put(f'http://bread-backend:8543/bread/{data[product_to_edit]["product_id"]}', json={"name": new_name, "photos": new_photos_base64})
             if response.status_code == 200:
                 st.write('Данные успешно обновлены.')
             else:
@@ -58,7 +59,7 @@ if data:
         # Confirm the deletion
         if st.button('Подтвердите удаление'):
             # Send a DELETE request
-            response = requests.delete(f'http://backend:8543/bread/{data[product_to_edit]["product_id"]}')
+            response = requests.delete(f'http://bread-backend:8543/bread/{data[product_to_edit]["product_id"]}')
             if response.status_code == 200:
                 st.write('Продукт успешно удален')
             else:
@@ -74,6 +75,7 @@ st.header("Добавление нового продукта")
 
 with st.form(key="bread_form"):
     text_input = st.text_input("Введите название продукта")
+    labeling_name= st.text_input('Введите название класса разметки')
 
     uploaded_files = st.file_uploader("Выберите изображения", accept_multiple_files=True)
 
@@ -89,8 +91,8 @@ with st.form(key="bread_form"):
 
 if submit_button:
     # Send the images to FastAPI
-    response = requests.post('http://backend:8543/bread/',
-                             json={"name": text_input, "photos": images_base64})
+    response = requests.post('http://bread-backend:8543/bread/',
+                             json={"name": text_input, "labeling_name": text_input, "photos": images_base64})
     if response.status_code == 200:
         st.write('Изображения успешно загружены')
     else:

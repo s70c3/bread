@@ -31,9 +31,17 @@ class Producer:
         self.add_stream(*self.video_source)
         self.is_running = True
 
-    def add_stream(self, rtsp, camera_id, bread_id, name, selection_area, counting_line, status ):
+    def add_stream(self,  rtsp, request_id, selection_area, counting_line, status):
         # create instance of BoxAnnotator and LineCounterAnnotator
-
+        mapping = dict()
+        try:
+            response = requests.get('http://backend:8543/bread/')
+            breads = response.json()['breads']
+            for product in breads:
+                mapping[product['name']] = product['id']
+        except Exception as e:
+            print("Невозможно получить список продуктов. Записи в базе будут требовать корректировки.")
+            print(e)
         counting_line = ast.literal_eval(counting_line)
         selection_area = ast.literal_eval(selection_area)
         LINE_START = sv.Point(counting_line[0] - selection_area[1], counting_line[1])
@@ -43,39 +51,54 @@ class Producer:
         line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
         tracker = sv.ByteTrack()
 
-        self._read_video(rtsp, tracker, line_counter, camera_id, bread_id, name, selection_area)
+        self._read_video(rtsp, tracker, line_counter, request_id, selection_area, mapping)
 
-    def _read_video(self, rtsp, tracker, line_counter, camera_id=1, product_id=1, name="notaclassname", selection_area=None):
+    def _read_video(self, rtsp, tracker, line_counter, request_id=1, selection_area=None, mapping = None):
             cap = cv2.VideoCapture(rtsp)
             ret, frame = cap.read()
+
+
             if selection_area is None:
                 selection_area = [0,0, frame.shape[0], frame.shape[1]]
             frame_counter = 0
             model = YOLO('/model/yolo.pt')
-            while True:
-                ret, frame = cap.read()
-                frame_counter+=1
-                try:
-                # if not ret:
-                #     break
-                    tracker, line_counter = process_data(frame, model, tracker, line_counter, camera_id, name, selection_area)
-                    if frame_counter % 20 == 0:
+            zero_frames = 0
+            current_class = "empty"
 
+            while self.is_running:
+                ret, frame = cap.read()
+                if not ret:
+                    print("Can't receive frame. Retrying ...")
+                    cap.release()
+                    cap = cv2.VideoCapture(rtsp)
+                    ret, frame = cap.read()
+
+                frame_counter+=1
+                tracker, line_counter, current_class, zero_frames, need_to_store = process_data(frame, model, tracker, line_counter,
+                                                                                  selection_area,
+                                                                                 current_class, zero_frames)
+                if frame_counter % 20 == 0 or need_to_store:
+                    if need_to_store:
                         data = {
-                            "camera_id": camera_id,
-                            "product_id": product_id,
-                            "name": name,
-                            "count":line_counter.out_count,
+                            "request_id": request_id,
+                            "product_id" : mapping[need_to_store[0]],
+                            "count": need_to_store[1],
+                            "timestamp": time.time()
+                        }
+                    else:
+                        data = {
+                            "request_id": request_id,
+                            "class_name": mapping[current_class],
+                            "count": line_counter.out_count,
                             "timestamp" : time.time()
                         }
-                        response = requests.post("http://backend:8543/counting_result/", json=data)
-                        if response.status_code == 200:
-                            print("Data sent successfully: "+ str(camera_id) + " " + str(product_id) + " " +str(line_counter.out_count))
-                        else:
-                            print("Failed to send data")
-                except Exception as e:
-                    pass
-            cap.release()
+                    response = requests.post("http://backend:8543/counting_result/", json=data)
+                    if response.status_code == 200:
+                        print("Data sent successfully: "+ str(request_id) + " " + str(mapping[current_class]) + " " +str(line_counter.out_count))
+                    else:
+                        print("Failed to send data")
+            else:
+                cap.release()
 
     def stop(self):
         if not self.is_running:

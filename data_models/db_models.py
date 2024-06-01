@@ -7,63 +7,51 @@ from os import environ
 
 Base = declarative_base()
 
-class Camera(Base):
-    __tablename__ = 'cameras'
-
-    camera_id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    description = Column(String)
-    rtsp_stream = Column(String)
-
-    counting_results = relationship("CountingResult", back_populates="camera")
-    counting_requests = relationship("CountingRequest", back_populates="camera")
-    labeling_requests = relationship("LabelingRequest", back_populates="camera")
-
-
 class BreadProduct(Base):
     __tablename__ = 'bread_products'
 
     product_id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    labeling_name = Column(String, nullable=False)
     photos = Column(String)
 
-    counting_results = relationship("CountingResult", back_populates="product", overlaps="counting_requests")
-    counting_requests = relationship("CountingRequest", back_populates="product", overlaps="counting_results")
-    labeling_requests = relationship("LabelingRequest", back_populates="product", overlaps="counting_results")
-
+    labeling_requests = relationship("LabelingRequest", back_populates="product")
+    counting_results = relationship("CountingResult", back_populates="product")
 
 class LabelingRequest(Base):
     __tablename__ = 'labeling_requests'
     product_id = Column(Integer, ForeignKey('bread_products.product_id'), primary_key=True)
-    camera_id = Column(Integer, ForeignKey('cameras.camera_id'), primary_key=True)
+    request_id = Column(Integer, ForeignKey('counting_requests.request_id'), primary_key=True)
     name = Column(String)
 
-    camera = relationship("Camera", back_populates="labeling_requests")
+    request = relationship("CountingRequest", back_populates="request")
     product = relationship("BreadProduct", back_populates="labeling_requests")
-
-
 
 class CountingRequest(Base):
     __tablename__ = 'counting_requests'
-    id = Column(Integer, primary_key=True)
-    product_id = Column(Integer, ForeignKey('bread_products.product_id'))
-    camera_id = Column(Integer, ForeignKey('cameras.camera_id'))
+    request_id = Column(Integer, primary_key=True)
+
+    name = Column(String, nullable=False)
+    description = Column(String)
+    rtsp_stream = Column(String)
+
     selection_area = Column(String)
     counting_line = Column(String)
-    camera = relationship("Camera", back_populates="counting_requests")
-    product = relationship("BreadProduct", back_populates="counting_requests")
     status = Column(Integer)
+
+    request = relationship("LabelingRequest", back_populates="request")
+    labeling_results = relationship("CountingResult", back_populates="request")
 
 class CountingResult(Base):
     __tablename__ = 'counting_results'
 
     result_id = Column(Integer, primary_key=True)
-    camera_id = Column(Integer, ForeignKey('cameras.camera_id'), nullable=False)
+    request_id = Column(Integer, ForeignKey('counting_requests.request_id'), nullable=False)
     product_id = Column(Integer, ForeignKey('bread_products.product_id'), nullable=False)
     timestamp = Column(DateTime, nullable=False)
     count = Column(Integer, nullable=False)
 
-    camera = relationship("Camera", back_populates="counting_results")
+    request = relationship("CountingRequest", back_populates="labeling_results")
     product = relationship("BreadProduct", back_populates="counting_results")
 
 # Указываем параметры подключения к базе данных PostgreSQL

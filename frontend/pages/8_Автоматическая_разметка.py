@@ -11,7 +11,7 @@ if not check_password():
 
 
 # Fetch the list of cameras
-response = requests.get('http://backend:8543/camera')
+response = requests.get('http://bread-backend:8543/camera')
 if response.status_code == 200:
     sources_raw = response.json()
     sources = {camera['name']: camera['rtsp_stream'] for camera in sources_raw['cameras']}
@@ -20,7 +20,7 @@ else:
     print('Не получается получить список камер. Проверьте доступ к серверу.')
 
 # Fetch the list of bread products
-response = requests.get('http://backend:8543/bread/')
+response = requests.get('http://bread-backend:8543/bread/')
 if response.status_code == 200:
     breads = response.json()
     breads = {bread['name']: bread['product_id'] for bread in breads['breads']}
@@ -48,7 +48,7 @@ try:
 
     # Send the data to the backend
     if st.button('Подтвердить'):
-        response = requests.post('http://backend:8543/label/', json={
+        response = requests.post('http://bread-backend:8543/label/', json={
             'camera_id': camera_ids[source_radio],
             'product_id': breads[bread_select],
             'name' : bread_select

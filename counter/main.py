@@ -33,18 +33,14 @@ process_ids = dict()
 async def startup_event():
     db = next(get_db())
     video_sources =  [(
-        dataset.id,
-        db.query(models.Camera).filter(models.Camera.camera_id == dataset.camera_id).first().rtsp_stream,
-        dataset.camera_id,
-        dataset.product_id,
-        db.query(models.BreadProduct).filter(
-            models.BreadProduct.product_id == dataset.product_id).first().name,
-        dataset.selection_area,
-        dataset.counting_line,
-        dataset.status)
-        for dataset in db.query(models.CountingRequest).filter(models.CountingRequest.status == 1).all()]
+        counting_request.rtsp_stream,
+        counting_request.request_id,
+        counting_request.selection_area,
+        counting_request.counting_line,
+        counting_request.status)
+        for counting_request in db.query(models.CountingRequest).filter(models.CountingRequest.status == 1).all()]
     for video_source in video_sources:
-        producer = Producer(video_source[1:])
+        producer = Producer(video_source)
         process = mp.Process(target=producer.start)
         process.start()
         processes.append(process)
@@ -52,12 +48,9 @@ async def startup_event():
     return process_ids
 
 @app.post("/process/{request_id}")
-def create_process(request_id, counting_request : CountingRequest, db: Session = Depends(get_db)):
-    video_source = (db.query(models.Camera).filter(models.Camera.camera_id == counting_request.camera_id).first().rtsp_stream,
-    counting_request.camera_id,
-    counting_request.product_id,
-    db.query(models.BreadProduct).filter(
-        models.BreadProduct.product_id == counting_request.product_id).first().name,
+def create_process(request_id, counting_request : CountingRequest):
+    video_source = (counting_request.rtsp_stream,
+    request_id,
     counting_request.selection_area,
     counting_request.counting_line,
     counting_request.status)
