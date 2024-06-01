@@ -78,32 +78,28 @@ class Producer:
                                                                                  current_class, zero_frames)
                 if frame_counter % 20 == 0 or need_to_store:
                     if need_to_store:
-                        if current_class == "empty":
-                            product_id = -1
-                        else:
-                            product_id = mapping[need_to_store[0]] if mapping else need_to_store[0]
-                        data = {
-                            "request_id": request_id,
-                            "product_id" : product_id,
-                            "count": need_to_store[1],
-                            "timestamp": time.time()
-                        }
+                        current_class = need_to_store[0]
+                        count_value = need_to_store[1]
                     else:
-                        if current_class == "empty":
-                            product_id = -1
-                        else:
-                            product_id =  mapping[current_class] if mapping else current_class
-                        data = {
-                            "request_id": request_id,
-                            "class_name": product_id,
-                            "count": line_counter.out_count,
-                            "timestamp" : time.time()
-                        }
+                        count_value = line_counter.out_count
+
+                    if current_class == "empty":
+                        product_id = -1
+                    else:
+                        product_id =  mapping[current_class] if mapping else current_class
+
+                    data = {
+                        "request_id": request_id,
+                        "class_name": product_id,
+                        "count": count_value,
+                        "timestamp" : time.time()
+                    }
                     response = requests.post("http://backend:8543/counting_result/", json=data)
                     if response.status_code == 200:
                         print("Data sent successfully: "+ str(request_id) + " " + str(mapping[current_class]) + " " +str(line_counter.out_count))
                     else:
                         print("Failed to send data")
+                        print(response.text)
             else:
                 cap.release()
 
