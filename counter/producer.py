@@ -40,7 +40,7 @@ class Producer:
         breads = response.json()['breads']
         if len(breads)>0:
             for product in breads:
-                mapping[product['name']] = product['product_id']
+                mapping[product['labeling_name']] = product['product_id']
         else:
             mapping=None
         counting_line = ast.literal_eval(counting_line)
@@ -90,7 +90,7 @@ class Producer:
 
                     data = {
                         "request_id": request_id,
-                        "class_name": product_id,
+                        "product_id": product_id,
                         "count": count_value,
                         "timestamp" : time.time()
                     }
