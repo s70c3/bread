@@ -37,8 +37,11 @@ class Producer:
         try:
             response = requests.get('http://backend:8543/bread/')
             breads = response.json()['breads']
-            for product in breads:
-                mapping[product['name']] = product['id']
+            if len(breads)>0:
+                for product in breads:
+                    mapping[product['name']] = product['id']
+            else:
+                mapping=None
         except Exception as e:
             print("Невозможно получить список продуктов. Записи в базе будут требовать корректировки.")
             print(e)
@@ -81,14 +84,14 @@ class Producer:
                     if need_to_store:
                         data = {
                             "request_id": request_id,
-                            "product_id" : mapping[need_to_store[0]],
+                            "product_id" : mapping[need_to_store[0]] if mapping else  need_to_store[0],
                             "count": need_to_store[1],
                             "timestamp": time.time()
                         }
                     else:
                         data = {
                             "request_id": request_id,
-                            "class_name": mapping[current_class],
+                            "class_name": mapping[current_class] if mapping else current_class,
                             "count": line_counter.out_count,
                             "timestamp" : time.time()
                         }
