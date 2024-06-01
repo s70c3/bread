@@ -48,8 +48,7 @@ if data:
 
         if submit_button:
             # Send a PUT request with the new data
-            response = requests.put(f'http://bread-backend:8543/bread/{
-            data[product_to_edit]["product_id"]}', json={"name": new_name,
+            response = requests.put(f'http://bread-backend:8543/bread/{data[product_to_edit]["product_id"]}', json={"name": new_name,
                                                         "labeling_name": new_labeling_name, "photos": new_photos_base64})
             if response.status_code == 200:
                 st.write('Данные успешно обновлены.')
