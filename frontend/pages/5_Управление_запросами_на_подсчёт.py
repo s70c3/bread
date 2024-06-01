@@ -34,16 +34,16 @@ if response.status_code == 200:
     # Ask the user if they want to edit or delete the selected row
     action = st.selectbox('Вы хотите изменить или удалить камеру?', options=['Изменить', 'Удалить'])
     request = next((req for req in counting_requests if
-                    (req['name'] == request_id[0])), None)
+                    (req['name'] == request_id)), None)
 
     if action == 'Изменить':
         with st.form(key='edit_form'):
         # If the user chooses to update a camera
         # Display a form with the current details of the camera
             if request:
-                    new_name = st.text_input("Название камеры")
-                    new_address = st.text_input("rtsp-адрес камеры")
-                    new_description = st.text_input("Описание камеры")
+                    new_name = st.text_input("Название камеры", request['name'])
+                    new_address = st.text_input("rtsp-адрес камеры",  request['rtsp_stream'])
+                    new_description = st.text_input("Описание камеры", request['description'])
                     new_selection_area = st.text_input('Зона выбора', request['selection_area'])
                     new_counting_line = st.text_input('Линия подсчёта', request['counting_line'])
                     new_status = st.radio('Статус:', [0, 1], format_func=lambda x: 'Работает' if x == 1 else 'Выключена')
@@ -51,7 +51,7 @@ if response.status_code == 200:
 
                     if submit_button:
                     # Send the updated counting request to the backend
-                        response = requests.put(f"http://backend:8543/count/{request['id']}", json={
+                        response = requests.put(f"http://backend:8543/count/{request['request_id']}", json={
                             "name": new_name,
                             "rtsp_stream": new_address,
                             "description": new_description,
@@ -68,7 +68,7 @@ if response.status_code == 200:
     if action =='Удалить':
         # Confirm the deletion before sending the delete request to the backend
         if st.button('Подтвердить удаление'):
-            response = requests.delete(f"http://backend:8543/count/{request['id']}")
+            response = requests.delete(f"http://backend:8543/count/{request['request_id']}")
             if response.status_code == 200:
                 st.success("Запрос на подсчёт успешно удалён.")
             else:

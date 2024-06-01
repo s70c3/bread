@@ -94,6 +94,7 @@ def counting_requests_info(db: Session = Depends(get_db)):
             'request_id': counting_request.request_id,
             'rtsp_stream': counting_request.rtsp_stream,
             'name': counting_request.name,
+            'description': counting_request.description,
             'selection_area': counting_request.selection_area,
             'counting_line': counting_request.counting_line,
             'status': counting_request.status
@@ -130,7 +131,7 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
 # Update a counting request
 @app.put("/count/{request_id}")
 def update_counting_request(request_id: int, counting_request: CountingRequest, db: Session = Depends(get_db)):
-    db_counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.id == request_id).first()
+    db_counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.request_id == request_id).first()
     pre_status = db_counting_request.status
     if db_counting_request:
         for var, value in vars(counting_request).items():
@@ -145,7 +146,9 @@ def update_counting_request(request_id: int, counting_request: CountingRequest, 
                 'counting_line': counting_request.counting_line,
                 'status': counting_request.status
             })
-        return {"message": "Counting request updated successfully"}
+            if response.status_code == 200:
+                return {"message": "Counting request updated successfully"}
+
 
     raise HTTPException(status_code=404, detail="Counting request not found")
 
