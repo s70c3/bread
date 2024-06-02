@@ -124,12 +124,16 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
     if counting_request.status == 0:
         return {"message": "Запрос на подсчёт  создан, но не активен"}
     # Запуск чтения видео и отправки кадров на обработку
-    response = requests.post(f"http://counter:8544/process/{id}",
-               json={'selection_area': counting_request.selection_area,
+
+    response = requests.post(f"http://counter:8544/process/",
+               json={"request_id" : id,
+                "name": counting_request.name,
+                "description":counting_request.description,
+                'rtsp_stream' : counting_request.rtsp_stream,
+                'selection_area': counting_request.selection_area,
                 'counting_line': counting_request.counting_line,
                 'status': counting_request.status
             })
-
     return response
 
 
@@ -165,7 +169,7 @@ def update_counting_request(request_id: int, counting_request: CountingRequest, 
 # Delete a counting request
 @app.delete("/count/{request_id}")
 def delete_counting_request(request_id: int, db: Session = Depends(get_db)):
-    db_counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.id == request_id).first()
+    db_counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.request_id == request_id).first()
     if db_counting_request:
         response = requests.delete(f'http://counter:8544/process/{request_id}')
         db.delete(db_counting_request)
@@ -176,7 +180,7 @@ def delete_counting_request(request_id: int, db: Session = Depends(get_db)):
 
 @app.get("/counting_request/{request_id}")
 def get_counting_request(request_id: int, db: Session = Depends(get_db)):
-    counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.id == request_id).first()
+    counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.request_id == request_id).first()
     if counting_request is None:
         raise HTTPException(status_code=404, detail="Counting request not found")
 

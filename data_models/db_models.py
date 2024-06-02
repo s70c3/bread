@@ -40,18 +40,18 @@ class CountingRequest(Base):
     status = Column(Integer)
 
     request = relationship("LabelingRequest", back_populates="request")
-    labeling_results = relationship("CountingResult", back_populates="request")
+    labeling_results = relationship("CountingResult",  cascade="all,delete", back_populates="request")
 
 class CountingResult(Base):
     __tablename__ = 'counting_results'
 
     result_id = Column(Integer, primary_key=True)
-    request_id = Column(Integer, ForeignKey('counting_requests.request_id'), nullable=False)
+    request_id = Column(Integer, ForeignKey('counting_requests.request_id'), nullable=True)
     product_id = Column(Integer, ForeignKey('bread_products.product_id'), nullable=True)
     timestamp = Column(DateTime, nullable=False)
     count = Column(Integer, nullable=False)
 
-    request = relationship("CountingRequest", back_populates="labeling_results")
+    request = relationship("CountingRequest", cascade="all,delete",  back_populates="labeling_results")
     product = relationship("BreadProduct", back_populates="counting_results")
 
 # Указываем параметры подключения к базе данных PostgreSQL

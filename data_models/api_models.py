@@ -10,6 +10,7 @@ class BreadProduct(BaseModel):
     photos: Optional[List[str]] = None
 
 class CountingRequest(BaseModel):
+    request_id : Optional[int] = None
     name: str
     description: Optional[str] = None
     rtsp_stream: Optional[str] = None

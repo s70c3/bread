@@ -35,8 +35,8 @@ async def startup_event():
     response = requests.get("http://backend:8543/count/")
     counting_requests = response.json()
     video_sources = [(
-        counting_request['rtsp_stream'],
         counting_request['request_id'],
+        counting_request['rtsp_stream'],
         counting_request['selection_area'],
         counting_request['counting_line'],
         counting_request['status'])
@@ -50,10 +50,10 @@ async def startup_event():
     return process_ids
 
 
-@app.post("/process/{request_id}")
+@app.post("/process/")
 def create_process(request_id, counting_request: CountingRequest):
-    video_source = (counting_request.rtsp_stream,
-                    request_id,
+    video_source = (counting_request.request_id,
+                    counting_request.rtsp_stream,
                     counting_request.selection_area,
                     counting_request.counting_line,
                     counting_request.status)

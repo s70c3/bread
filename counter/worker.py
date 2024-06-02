@@ -10,7 +10,6 @@ def process_data(frame, model, tracker, line_counter,selection_area, current_cla
     detections = sv.Detections.from_ultralytics(results)
     need_to_store = None
     total_objects = len(detections)
-    print("in", current_class)
     if total_objects == 0:
         zero_frames += 1
         if zero_frames >= 20:
@@ -24,8 +23,6 @@ def process_data(frame, model, tracker, line_counter,selection_area, current_cla
                     need_to_store = current_class, line_counter.out_count
                     current_class = cl
                     line_counter.out_count = 0
-                    print(need_to_store, current_class, line_counter.out_count)
-    print("out", current_class)
     detections = detections[detections['class_name'] == current_class]
     detections = tracker.update_with_detections(detections)
     line_counter.trigger(detections=detections)
