@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 # FastAPI URL
 API_URL = "http://backend:8543"  # Update with your actual API URL
 
-st.title("Production Aggregation Results")
+st.title("Просмотр статистики подсчёта")
 
 # Sidebar inputs for query parameters
 st.sidebar.header("Параметры запроса статистики")
