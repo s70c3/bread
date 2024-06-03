@@ -4,13 +4,13 @@ services:
   backend:
     build: bread-backend
     image: server
-#    deploy:
-#      resources:
-#        reservations:
-#          devices:
-#            - driver: nvidia
-#              count: 1
-#              capabilities: [ gpu ]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     depends_on:
       - db
       - redis
@@ -36,13 +36,13 @@ services:
 
   counter:
       image: server
-#      deploy:
-#        resources:
-#          reservations:
-#            devices:
-#              - driver: nvidia
-#                count: 1
-#                capabilities: [ gpu ]
+      deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                count: 1
+                capabilities: [ gpu ]
 
       depends_on:
         - backend
@@ -62,13 +62,13 @@ services:
 
   frontend:
     build: bread-frontend
-#    deploy:
-#      resources:
-#        reservations:
-#          devices:
-#            - driver: nvidia
-#              count: 1
-#              capabilities: [ gpu ]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     ports:
       - "9033:8501"
     depends_on:
@@ -98,13 +98,13 @@ services:
 
   worker1:
     image: server
-#    deploy:
-#      resources:
-#        reservations:
-#          devices:
-#            - driver: nvidia
-#              count: 1
-#              capabilities: [ gpu ]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
     command: celery -A autolabel.worker.celery worker --loglevel=info --hostname=worker1@%h -Q queue1
     volumes:
       - ./backend:/usr/src/app
