@@ -16,7 +16,7 @@ class CountingRequest(BaseModel):
     rtsp_stream: Optional[str] = None
     selection_area: Optional[str] = None
     counting_line: Optional[str] = None
-    status : int
+    status : Optional[int]
 
 
 class LabelingRequest(BaseModel):

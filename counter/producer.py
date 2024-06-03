@@ -63,6 +63,7 @@ class Producer:
         model = YOLO('/model/yolo.pt')
         zero_frames = 0
         current_class = "empty"
+        previous_value = 0
         while self.is_running:
             ret, frame = cap.read()
             if not ret:
@@ -81,27 +82,30 @@ class Producer:
                 if need_to_store:
                     current_class_save = need_to_store[0]
                     count_value = need_to_store[1]
+                    previous_value=0
                 else:
                     current_class_save = current_class
                     count_value = line_counter.out_count
 
                 if current_class_save == "empty":
                     product_id = -1
+                    previous_value = 0
                 else:
                     product_id = mapping[current_class_save] if mapping else current_class_save
 
                 data = {
                     "request_id": request_id,
                     "product_id": product_id,
-                    "count": count_value,
+                    "count": count_value-previous_value,
                     "timestamp": time.time()
                 }
                 response = requests.post("http://backend:8543/counting_result/", json=data)
                 if response.status_code == 200:
-                    print("Data sent successfully: " + str(request_id) + " " + str(product_id) + " " + str(count_value))
+                    print("Data sent successsfully: " + str(request_id) + " " + str(product_id) + " " + str(count_value))
                 else:
                     print("Failed to send data")
                     print(response.text)
+                previous_value = count_value
         else:
             cap.release()
 

@@ -13,6 +13,7 @@ app = FastAPI()
 from data_models.db_models import SessionLocal
 from backend.autolabel.worker import label_data
 
+from datetime import datetime, timedelta
 
 # Функция для получения сессии базы данных
 def get_db():
@@ -119,22 +120,25 @@ def start_new_counting(counting_request: CountingRequest, db: Session = Depends(
     db.add(new_request)
     db.commit()
 
-    id = new_request.request_id
+    request_id = new_request.request_id
     # Get all st    reams from the CountRequest table
     if counting_request.status == 0:
         return {"message": "Запрос на подсчёт  создан, но не активен"}
     # Запуск чтения видео и отправки кадров на обработку
 
-    response = requests.post(f"http://counter:8544/process/",
-               json={"request_id" : id,
-                "name": counting_request.name,
-                "description":counting_request.description,
-                'rtsp_stream' : counting_request.rtsp_stream,
-                'selection_area': counting_request.selection_area,
-                'counting_line': counting_request.counting_line,
-                'status': counting_request.status
-            })
-    return response
+    response = requests.post(f'http://counter:8544/process/', json={
+        'request_id': request_id,
+        'rtsp_stream': counting_request.rtsp_stream,
+        'name': counting_request.name,
+        'description': counting_request.description,
+        'selection_area': counting_request.selection_area,
+        'counting_line': counting_request.counting_line,
+        'status': counting_request.status
+    })
+    if response.status_code == 200:
+        return {"message": "Counting request updated successfully"}
+    else:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
 
 
 # Update a counting request
@@ -149,7 +153,8 @@ def update_counting_request(request_id: int, counting_request: CountingRequest, 
         if pre_status == 1:
             response = requests.delete(f'http://counter:8544/process/{request_id}')
         if counting_request.status == 1:
-            response = requests.post(f'http://counter:8544/process/{request_id}', json={
+            response = requests.post(f'http://counter:8544/process/', json={
+                'request_id' : request_id,
                 'rtsp_stream': counting_request.rtsp_stream,
                 'name' : counting_request.name,
                 'description' : counting_request.description,
@@ -193,6 +198,48 @@ def get_counting_request(request_id: int, db: Session = Depends(get_db)):
     }
 
 
+@app.get("/aggregate/")
+def aggregate_production(
+    start_period: datetime,
+    end_period: datetime,
+    step: int,
+    request_id: int,
+    db: Session = Depends(get_db)
+):
+    try:
+        results = []
+        current_period_start = start_period
+
+        while current_period_start < end_period:
+            current_period_end = current_period_start + timedelta(minutes=step)
+            query = db.query(
+                models.CountingResult.product_id,
+                func.sum(models.CountingResult.count).label('total_count')
+            ).filter(
+                models.CountingResult.request_id == request_id,
+                models.CountingResult.timestamp >= current_period_start,
+                models.CountingResult.timestamp < current_period_end
+            ).group_by(models.CountingResult.product_id)
+
+            period_results = query.all()
+
+            for result in period_results:
+                product_id = result.product_id
+                if product_id is None:
+                    product_id = "Conveyor Idle"
+                results.append({
+                    "period_start": current_period_start,
+                    "period_end": current_period_end,
+                    "product_id": product_id,
+                    "total_count": result.total_count
+                })
+
+            current_period_start = current_period_end
+
+        return {"aggregated_results": results}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 # Просмотр количества изделий за период времени
 @app.get("/bread/count/{camera_id}/period/{start_date}/{end_date}")
 def count_product_period(camera_id: int, start_date: str, end_date: str, db: Session = Depends(get_db)):

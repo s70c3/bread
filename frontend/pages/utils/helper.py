@@ -67,15 +67,16 @@ def _display_detected_frames(model, st_frame, st_text, frame, tracker=None, line
 
     # frame = box_annotator.annotate(scene=frame, detections=detections)
     line_annotator.annotate(frame=frame, line_counter=line_counter)
+    box_annotator.annotate(scene=frame, detections=detections)
 
     label_annotator = sv.LabelAnnotator()
-    labels = [
-        f"{mapping[class_name]}"
-        for class_name, confidence
-        in zip(detections['class_name'], detections.confidence)
-    ]
-    frame = label_annotator.annotate(
-        scene=frame, detections=detections, labels=labels)
+    # labels = [
+    #     f"{tracker_id} {mapping[class_name]}"
+    #     for class_name, tracker_id
+    #     in zip(detections['class_name'], detections.tracker_id)
+    # ]
+    # frame = label_annotator.annotate(
+    #     scene=frame, detections=detections)  #, labels=labels)
 
     # # Plot the detected objects on the video frame
     st_frame.image(frame,
@@ -112,10 +113,10 @@ def play_rtsp_stream(model, source_rtsp, counting_line, selection_area, mapping)
     LINE_START = sv.Point(counting_line[0] - selection_area[1], counting_line[1])
     LINE_END = sv.Point(counting_line[2] - selection_area[1], counting_line[3])
 
-    box_annotator = sv.BoxAnnotator(color=sv.ColorPalette.default(), thickness=1, text_thickness=1, text_scale=1)
+    box_annotator = sv.BoundingBoxAnnotator(color=sv.ColorPalette.default(), thickness=1)
     line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
     # create instance of BoxAnnotator and LineCounterAnnotator
-    line_annotator = sv.LineZoneAnnotator(thickness=1, text_thickness=1, text_scale=1)
+    line_annotator = sv.LineZoneAnnotator(thickness=1, text_thickness=1, text_scale=0.3)
     zero_frames = 0
     current_class = "empty"
     try:

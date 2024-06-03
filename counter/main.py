@@ -51,19 +51,19 @@ async def startup_event():
 
 
 @app.post("/process/")
-def create_process(request_id, counting_request: CountingRequest):
-    video_source = (counting_request.request_id,
+def create_process(counting_request: CountingRequest):
+    video_source = [counting_request.request_id,
                     counting_request.rtsp_stream,
                     counting_request.selection_area,
                     counting_request.counting_line,
-                    counting_request.status)
+                    counting_request.status]
 
     producer = Producer(video_source)
     process = mp.Process(target=producer.start)
     process.start()
     processes.append(process)
-    process_ids[str(request_id)] = process.pid
-    return process_ids
+    process_ids[str(counting_request.request_id)] = process.pid
+    return {"message":"ok"}
 
 
 @app.get("/process/{request_id}")
