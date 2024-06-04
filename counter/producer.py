@@ -44,8 +44,8 @@ class Producer:
             mapping = None
         counting_line = ast.literal_eval(counting_line)
         selection_area = ast.literal_eval(selection_area)
-        LINE_START = sv.Point(counting_line[0] - selection_area[1], counting_line[1] - selection_area[0])
-        LINE_END = sv.Point(counting_line[2] - selection_area[1], counting_line[3] - selection_area[0])
+        LINE_START = sv.Point(counting_line[0] - selection_area[0], counting_line[1] - selection_area[1])
+        LINE_END = sv.Point(counting_line[2] - selection_area[0], counting_line[3] - selection_area[1])
         if status == 0:
             return
         line_counter = sv.LineZone(start=LINE_START, end=LINE_END)
