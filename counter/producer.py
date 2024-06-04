@@ -10,7 +10,7 @@ import multiprocessing as mp
 import requests
 from ultralytics import YOLO
 
-from .worker import process_data
+from .helper import process_data
 import supervision as sv
 
 
