@@ -4,6 +4,7 @@ import pickle
 import time
 
 import cv2
+import os
 
 import multiprocessing as mp
 import requests
@@ -57,6 +58,11 @@ class Producer:
         cap = cv2.VideoCapture(rtsp)
         ret, frame = cap.read()
 
+        if os.path.isfile(rtsp):
+            is_file = True
+        else:
+            is_file = False
+
         if selection_area is None:
             selection_area = [0, 0, frame.shape[0], frame.shape[1]]
         frame_counter = 0
@@ -67,10 +73,14 @@ class Producer:
         while self.is_running:
             ret, frame = cap.read()
             if not ret:
-                print("Can't receive frame. Retrying ...")
-                cap.release()
-                cap = cv2.VideoCapture(rtsp)
-                ret, frame = cap.read()
+                if is_file:
+                    self.is_running = False
+                    break
+                else:
+                    print("Can't receive frame. Retrying ...")
+                    cap.release()
+                    cap = cv2.VideoCapture(rtsp)
+                    ret, frame = cap.read()
 
             frame_counter += 1
             tracker, line_counter, current_class, zero_frames, need_to_store = process_data(frame, model, tracker,
