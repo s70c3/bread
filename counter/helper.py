@@ -4,7 +4,6 @@ import supervision as sv
 import cv2
 import numpy as np
 def process_data(frame, model, tracker, line_counter,selection_area, current_class, zero_frames):
-    frame = cv2.resize(frame, (720, int(720 * (9 / 16))))
     frame = frame[selection_area[1]:selection_area[3], selection_area[0]:selection_area[2]]
     results = model(frame)[0]
     detections = sv.Detections.from_ultralytics(results)
@@ -14,9 +13,11 @@ def process_data(frame, model, tracker, line_counter,selection_area, current_cla
         zero_frames += 1
         if zero_frames >= 20:
             current_class = "empty"
+            line_counter.out_count = 0
     else:
         zero_frames = 0
         classes, counts = np.unique(detections['class_name'], return_counts=True)
+
         for cl, c in zip(classes, counts):
             if c / total_objects > 0.9:
                 if cl != current_class:

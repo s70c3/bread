@@ -70,8 +70,12 @@ class Producer:
         zero_frames = 0
         current_class = "empty"
         previous_value = 0
+        all_frame_counter = 0
         while self.is_running:
             ret, frame = cap.read()
+            all_frame_counter+=1
+            if is_file and all_frame_counter%2==0:
+                continue
             if not ret:
                 if is_file:
                     self.is_running = False
@@ -100,6 +104,7 @@ class Producer:
                 if current_class_save == "empty":
                     product_id = -1
                     previous_value = 0
+                    count_value = 0
                 else:
                     product_id = mapping[current_class_save] if mapping else current_class_save
 
