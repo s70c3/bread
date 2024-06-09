@@ -93,7 +93,7 @@ class Producer:
                                                                                             current_class, zero_frames)
             if frame_counter % 20 == 0 or need_to_store:
 
-                if need_to_store:
+                if need_to_store is not None:
                     current_class_save = need_to_store[0]
                     count_value = need_to_store[1]
                 else:
@@ -119,6 +119,7 @@ class Producer:
                 else:
                     print("Failed to send data")
                     print(response.text)
+
                 if need_to_store or current_class_save == "empty":
                     previous_value = 0
                 else:
