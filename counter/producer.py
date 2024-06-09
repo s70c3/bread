@@ -96,7 +96,6 @@ class Producer:
                 if need_to_store:
                     current_class_save = need_to_store[0]
                     count_value = need_to_store[1]
-                    previous_value=0
                 else:
                     current_class_save = current_class
                     count_value = line_counter.out_count
@@ -120,7 +119,10 @@ class Producer:
                 else:
                     print("Failed to send data")
                     print(response.text)
-                previous_value = count_value
+                if need_to_store or current_class_save == "empty":
+                    previous_value = 0
+                else:
+                    previous_value = count_value
         else:
             cap.release()
 
