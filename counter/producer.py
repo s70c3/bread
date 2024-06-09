@@ -79,7 +79,6 @@ class Producer:
             if not ret:
                 if is_file:
                     self.is_running = False
-                    break
                 else:
                     print("Can't receive frame. Retrying ...")
                     cap.release()
