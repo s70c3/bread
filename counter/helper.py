@@ -11,7 +11,7 @@ def process_data(frame, model, tracker, line_counter,selection_area, current_cla
     total_objects = len(detections)
     if total_objects == 0:
         zero_frames += 1
-        if zero_frames >= 20:
+        if zero_frames >= 20 and current_class!="empty":
             need_to_store = current_class, line_counter.out_count
             current_class = "empty"
             line_counter.out_count = 0

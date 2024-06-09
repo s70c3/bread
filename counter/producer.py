@@ -95,6 +95,7 @@ class Producer:
                 if need_to_store is not None:
                     current_class_save = need_to_store[0]
                     count_value = need_to_store[1]
+                    previous_value=0
                 else:
                     current_class_save = current_class
                     count_value = line_counter.out_count
