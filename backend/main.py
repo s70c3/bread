@@ -176,7 +176,8 @@ def update_counting_request(request_id: int, counting_request: CountingRequest, 
 def delete_counting_request(request_id: int, db: Session = Depends(get_db)):
     db_counting_request = db.query(models.CountingRequest).filter(models.CountingRequest.request_id == request_id).first()
     if db_counting_request:
-        response = requests.delete(f'http://counter:8544/process/{request_id}')
+        if db_counting_request.status == 1:
+            response = requests.delete(f'http://counter:8544/process/{request_id}')
         db.delete(db_counting_request)
         db.commit()
         return {"message": "Counting request deleted successfully"}
