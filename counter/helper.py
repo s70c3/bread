@@ -4,6 +4,7 @@ import supervision as sv
 import cv2
 import numpy as np
 def process_data(frame, model, tracker, line_counter,selection_area, current_class, zero_frames):
+    frame = cv2.resize(frame, (720, int(720 * (9 / 16))))
     frame = frame[selection_area[1]:selection_area[3], selection_area[0]:selection_area[2]]
     results = model(frame)[0]
     detections = sv.Detections.from_ultralytics(results)
