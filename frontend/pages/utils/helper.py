@@ -85,11 +85,7 @@ def _display_detected_frames(model, st_frame, st_text, frame, tracker=None, line
                    use_column_width=True
                    )
 
-    st_text.markdown(f'''**Сейчас на конвейере:** {current_class}  
-    
-    
-    **Количество с начала прохода:** {line_counter.out_count}
-                    ''')
+    st_text.markdown(f'''**Сейчас на конвейере:** {current_class},  **количество с начала:**{line_counter.out_count}''')
     return tracker, line_counter, zero_frames, current_class
 
 
