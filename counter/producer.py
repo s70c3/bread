@@ -95,7 +95,6 @@ class Producer:
                 if need_to_store:
                     current_class_save = need_to_store[0]
                     count_value = need_to_store[1]
-                    previous_value=0
                 else:
                     current_class_save = current_class
                     count_value = line_counter.out_count
@@ -104,6 +103,7 @@ class Producer:
                     product_id = -1
                     previous_value = 0
                     count_value = 0
+                    line_counter.out_count = 0
                 else:
                     product_id = mapping[current_class_save] if mapping else current_class_save
 

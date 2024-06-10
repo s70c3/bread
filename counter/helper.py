@@ -15,7 +15,6 @@ def process_data(frame, model, tracker, line_counter,selection_area, current_cla
         if zero_frames >= 20 and current_class!="empty":
             need_to_store = current_class, line_counter.out_count
             current_class = "empty"
-            line_counter.out_count = 0
     else:
         zero_frames = 0
         classes, counts = np.unique(detections['class_name'], return_counts=True)
@@ -29,6 +28,6 @@ def process_data(frame, model, tracker, line_counter,selection_area, current_cla
     detections = detections[detections['class_name'] == current_class]
     detections = tracker.update_with_detections(detections)
     line_counter.trigger(detections=detections)
-
+    print(current_class, line_counter.out_count)
     return tracker, line_counter, current_class, zero_frames, need_to_store
 
