@@ -85,7 +85,7 @@ def _display_detected_frames(model, st_frame, st_text, frame, tracker=None, line
                    use_column_width=True
                    )
 
-    st_text.markdown(f'''**Сейчас на конвейере:** {current_class},  **количество с начала:**{line_counter.out_count}''')
+    st_text.markdown(f'''**Сейчас на конвейере:** {current_class},  количество с начала:{line_counter.out_count}''')
     return tracker, line_counter, zero_frames, current_class
 
 
@@ -104,8 +104,14 @@ def play_rtsp_stream(model, source_rtsp, counting_line, selection_area, mapping)
         None
     """
     tracker = sv.ByteTrack()
-    counting_line = ast.literal_eval(counting_line)
-    selection_area = ast.literal_eval(selection_area)
+    if counting_line is None:
+        counting_line = [0, 500, 3000, 500]
+    else:
+        counting_line = ast.literal_eval(counting_line)
+    if selection_area is None:
+        selection_area = [0, 0, -1, -1]
+    else:
+        selection_area = ast.literal_eval(selection_area)
     LINE_START = sv.Point(counting_line[0] - selection_area[0], counting_line[1] - selection_area[1])
     LINE_END = sv.Point(counting_line[2] - selection_area[0], counting_line[3] - selection_area[1])
     box_annotator = sv.BoundingBoxAnnotator(color=sv.ColorPalette.default(), thickness=1)
