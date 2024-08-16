@@ -148,7 +148,7 @@ def update_counting_request(request_id: int, counting_request: CountingRequest, 
     pre_status = db_counting_request.status
     if db_counting_request:
         for var, value in vars(counting_request).items():
-            setattr(db_counting_request, var, value) if value is not None else None
+            setattr(db_counting_request, var, value)
         db.commit()
         if pre_status == 1:
             response = requests.delete(f'http://counter:8544/process/{request_id}')
