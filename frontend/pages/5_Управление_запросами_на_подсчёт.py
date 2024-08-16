@@ -45,7 +45,11 @@ if response.status_code == 200:
                     new_address = st.text_input("rtsp-адрес камеры",  request['rtsp_stream'])
                     new_description = st.text_input("Описание камеры", request['description'])
                     new_selection_area = st.text_input('Зона выбора', request['selection_area'])
+                    if len(new_selection_area)==0:
+                        new_selection_area = None
                     new_counting_line = st.text_input('Линия подсчёта', request['counting_line'])
+                    if len(new_counting_line)==0:
+                        new_counting_line = None
                     new_status = st.radio('Статус:', [0, 1], format_func=lambda x: 'Работает' if x == 1 else 'Выключена')
                     submit_button = st.form_submit_button(label='Подтвердить')
 
