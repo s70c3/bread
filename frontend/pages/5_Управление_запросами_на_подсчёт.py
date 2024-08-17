@@ -56,6 +56,7 @@ if response.status_code == 200:
                     if submit_button:
                     # Send the updated counting request to the backend
                         response = requests.put(f"http://backend:8543/count/{request['request_id']}", json={
+                            'request_id': request_id,
                             "name": new_name,
                             "rtsp_stream": new_address,
                             "description": new_description,
